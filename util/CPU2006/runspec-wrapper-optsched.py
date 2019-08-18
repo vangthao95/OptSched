@@ -68,7 +68,8 @@ benchDict['ALL'] = [
     'zeusmp',
     'gromacs',
     'cactus',
-    'leslie', 'namd',
+    'leslie',
+    'namd',
     'dealII',
     'soplex',
     'povray',
@@ -761,8 +762,8 @@ def writeLogs(output, testOutDir, bench):
 def main(args):
     ## Select benchmarks.
     benchArgs = args.bench.split(',')
-    # List of benchmarks to run.
-    benchmarks = []
+    # Get the list of benchmarks to run from commandline.
+    benchmarksList = []
     for benchArg in benchArgs:
         if benchArg not in benchDict:
             print 'Fatal: Unknown benchmark specified: "%s".' % benchArg
@@ -770,7 +771,13 @@ def main(args):
                 print 'Did you mean ALL?'
             sys.exit(1)
 
-        benchmarks = list(set(benchmarks + benchDict[benchArg]))
+        benchmarksList = list(set(benchmarksList + benchDict[benchArg]))
+    
+    # Add all valid benchmarks to the final list of benchmarks to run.
+    benchmarks = []
+    for x in benchDict["ALL"]:
+      if x in benchmarksList:
+        benchmarks.append(x)
 
     # Parse a log file or multiple log files instead of running benchmark
     results = {}
