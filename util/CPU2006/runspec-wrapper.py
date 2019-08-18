@@ -1,39 +1,48 @@
+'''*******************************************************************************
+Description:  Wrapper for the runspec tool. Use with the OptSched scheduler
+              and LLVM to collect compile-time or execution-time data
+              for SPEC CPU2006 benchmarks. 
+Author:       Vang Thao
+Created:      July 2019
+Last Update:  August 18, 2019
+*******************************************************************************'''
+
+'''
+ NOTE: The script must be run once so that it can create an .ini file
+       for the user. Edit the settings in the .ini file and then run
+       the script again to automatically run all tests with the
+       specified settings.
+ 
+  Functionality of this wrapper:
+  - Create a config file where you are able to:
+     - Edit the sched.ini file without navigating to the
+        OptSched directory every time.
+     - Decide which benchmarks to run
+  - Create a copy of the sched.ini file used and store it in the
+        output directory for each tests
+  - Run execution-time tests (e) or compile-time tests (c)
+     - Execution-time tests will have an option for outputting
+        the scores in a spreadsheet.
+     - Compile-time tests uses the "runspec-wrapper-optsched.py" script
+        to build the benchmarks and gather compile-time stats.
+  - Run multiple tests, one after another
+     - To do so you must edit your .ini file and add in a new [TEST2] section.
+        Any options in [TEST1] can be changed. To run more tests,
+        add in [TEST3], [TEST4], and so on. Test names must go in order
+        or there will be an error and/or the test will be not run.
+     - Any options that you do not replace in the previous tests
+        will be reused in the next test except for the test_name
+        option.
+   - An example .ini file with a description of each setting 
+        is located in the GitHub/util/CPU2006 directory.
+
+  Requirements:
+    - python3
+    - pip3
+    - configparser
+    - xlwt (install using pip3)
+'''
 #!/usr/bin/python3
-
-# Wrapper for the runspec tool. Use with the OptSched scheduler
-# and LLVM to collect compile-time or execution-time data
-# for SPEC CPU2006 benchmarks.
-
-#  Functionality of this wrapper:
-#  - Create a config file where you are able to:
-#     - Edit the sched.ini file without navigating to the
-#        OptSched directory every time.
-#     - Decide which benchmarks to run
-#  - Create a copy of the sched.ini file used
-#  - Run execution-time tests
-#     - Automatically run all specified benchmarks and put
-#        their scores in a spreadsheet with the random variance
-#  - Run compile-time tests
-#     - Automatically run all specified benchmarks and put
-#        the data in their own directory if multiple benchmarks
-#        were specified
-#  - Run multiple tests, one after another
-#     - To do so you must edit your .ini file and add in a new TEST2 section,
-#       to run a third test, add in a TEST3 section and so on.
-#     - Example: Running a compile time test after TEST1 has ran
-#       [TEST2]
-#       mode = c
-#       use_opt_sched = YES
-#       print_spill_counts = YES
-#       latency_precision = UNIT
-#       benchmark_selection = FP
-#     - Any settings not specified will use the previous run's values.
-#
-#  Requirements:
-#    - python3
-#    - pip3
-#    - configparser (installed with pip3)
-#    - xlwt (installed with pip3)
 
 import configparser # Used to parse .ini config file
 import xlwt # Python-excel used to generate output file
@@ -783,7 +792,7 @@ def main():
     print("Fatal error: Settings for TEST1 not found")
     return
 
-  # Check if there are any more tests
+  # Check if there are any more tests up to 10
   for i in range(2,11):
     current_test = "TEST" + str(i)
     if (config.has_section(current_test)):
