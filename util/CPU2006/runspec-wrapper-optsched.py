@@ -211,6 +211,9 @@ BLOCK_PEAK_REG_PRESSURE_REGEX = re.compile(r'PeakRegPresAfter Index (\d+) Name (
 BLOCK_PEAK_REG_BLOCK_NAME = re.compile(r'LLVM max pressure after scheduling for BB (\S+)')
 REGION_OPTSCHED_SPILLS_REGEX = re.compile(r"OPT_SCHED LOCAL RA: DAG Name: (\S+) Number of spills: (\d+) \(Time")
 
+# For error outputting
+DEBUG_FILE_DETECTED_REGEX = re.compile(r"The debug log for this run is in (.*?)\n")
+
 def writeStats(stats, spills, weighted, times, blocks, regp, trackOptSchedSpills):
     # Write times.
     if times:
@@ -726,6 +729,13 @@ def getBenchmarkResult(output, trackOptSchedSpills):
         'regpressure': calculatePeakPressureStats(output)
     }
 
+# Check for a *.log.debug file which will indicate that the benchmark
+# has failed. Return true if found otherwise false.
+def doesDebugFileExist(output):
+    if (DEBUG_FILE_DETECTED_REGEX.search(output)):
+      return True
+    else:
+      return False
 
 def runBenchmarks(benchmarks, testOutDir, shouldWriteLogs, config, trackOptSchedSpills):
     results = {}
@@ -739,7 +749,11 @@ def runBenchmarks(benchmarks, testOutDir, shouldWriteLogs, config, trackOptSched
             p.stdin.write(BUILD_COMMAND % (config, bench))
             p.stdin.close()
             output = p.stdout.read()
-
+            
+            # Check for persisting debug file which may indicate benchmark failure
+            if (doesDebugFileExist(output)):
+                print '  WARNING: Debug file detected. The benchmark %s may have failed. ' % bench
+                
         except subprocess.CalledProcessError as e:
             print '  WARNING: Benchmark command failed: %s.' % e
         else:
