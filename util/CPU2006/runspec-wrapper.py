@@ -11,7 +11,8 @@ Last Update:  August 18, 2019
  NOTE: The script must be run once so that it can create an .ini file
        for the user. Edit the settings in the .ini file and then run
        the script again to automatically run all tests with the
-       specified settings.
+       specified settings. The same script can be used by multiple
+       users since each user should have their own .ini file.
  
   Functionality of this wrapper:
   - Create a config file where you are able to:
