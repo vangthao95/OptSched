@@ -770,7 +770,6 @@ def main():
   now = datetime.datetime.now()
   time = now.strftime("%Y-%m-%d_%H-%M-%S")
   print(time)
-  return
 
   # Process TEST1
   if (config.has_section("TEST1")):
