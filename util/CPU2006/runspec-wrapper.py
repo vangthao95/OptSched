@@ -710,7 +710,7 @@ def runIndividualTests(settings, time, testNameStr):
     # Generate directory path
     outputFileDir = os.path.join(outputFileDir, time)
     outputFileDir = os.path.join(outputFileDir, "compile-time")
-    outputFileDir = os.path.join(outputFileDir, testNameStr)
+    tempOutputFileDir = os.path.join(outputFileDir, testNameStr)
     
     # If directory with the same name already exist then
     # add a counter to the name.
@@ -769,7 +769,6 @@ def main():
   # Get the time
   now = datetime.datetime.now()
   time = now.strftime("%Y-%m-%d_%H-%M-%S")
-  print(time)
 
   # Process TEST1
   if (config.has_section("TEST1")):
