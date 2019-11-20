@@ -1140,7 +1140,7 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
         inst->GetAdjustedUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst))
       {
         if (spillCostFunc_ == SCF_SLIL) {
-            if (inst->GetLiveIntervalImpactCnt() >= crntNode_->GetLiveIntervalImpactCnt())
+            if (inst->GetLiveIntervalImpactCnt() >= crntNode_->GetLiveIntervalImpact())
                 return false;
         } else {
           return false;
