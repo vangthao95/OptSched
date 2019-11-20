@@ -558,7 +558,8 @@ public:
                    InstCount schedUprBound, int16_t sigHashSize,
                    SchedPriorities prirts, Pruning PruningStrategy,
                    bool SchedForRPOnly, bool enblStallEnum,
-                   Milliseconds timeout, InstCount preFxdInstCnt = 0,
+                   Milliseconds timeout, SPILL_COST_FUNCTION spillCostFunc,
+                   InstCount preFxdInstCnt = 0,
                    SchedInstruction *preFxdInsts[] = NULL);
   virtual ~LengthEnumerator();
   void Reset();

@@ -1908,10 +1908,11 @@ LengthEnumerator::LengthEnumerator(
     DataDepGraph *dataDepGraph, MachineModel *machMdl, InstCount schedUprBound,
     int16_t sigHashSize, SchedPriorities prirts, Pruning PruningStrategy,
     bool SchedForRPOnly, bool enblStallEnum, Milliseconds timeout,
-    InstCount preFxdInstCnt, SchedInstruction *preFxdInsts[])
+    SPILL_COST_FUNCTION spillCostFunc, InstCount preFxdInstCnt,
+    SchedInstruction *preFxdInsts[])
     : Enumerator(dataDepGraph, machMdl, schedUprBound, sigHashSize, prirts,
                  PruningStrategy, SchedForRPOnly, enblStallEnum, timeout,
-                 preFxdInstCnt, preFxdInsts) {
+                 spillCostFunc, preFxdInstCnt, preFxdInsts) {
   SetupAllocators_();
   tmpHstryNode_ = new HistEnumTreeNode;
 
