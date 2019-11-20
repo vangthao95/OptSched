@@ -1139,8 +1139,12 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
     if (inst != NULL && crntNode_->FoundInstWithUse() &&
         inst->GetAdjustedUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst))
       {
-
-        return false;
+        if (spillCostFunc_ == SCF_SLIL) {
+            if (inst->GetLiveIntervalImpactCnt() >= crntNode_->GetLiveIntervalImpactCnt())
+                return false;
+        } else {
+          return false;
+        }
       }
   }
 
@@ -1875,6 +1879,7 @@ bool Enumerator::IsUseInRdyLst_() {
     assert(inst != NULL);
     if (inst->GetAdjustedUseCnt() != 0 || dataDepGraph_->DoesFeedUser(inst)) {
       foundUse = true;
+      crntNode_->SetLiveIntervalImpact(inst->GetLiveIntervalImpactCnt());
 #ifdef IS_DEBUG_RP_ONLY
       Logger::Info("Inst %d uses a register", inst->GetNum());
 #endif

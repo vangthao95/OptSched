@@ -147,6 +147,9 @@ private:
   // bool srchedInstWithUse_;
   // Did we find an instruction in the ready list that uses a register.
   bool foundInstWithUse_;
+  // The live interval impact for the instruction in the ready list
+  // that uses a register.
+  int16_t InstWithUseLiveIntervalImpact;
 
   InstCount cost_;
   InstCount costLwrBound_;
@@ -214,6 +217,8 @@ public:
 
   inline bool FoundInstWithUse();
   inline void SetFoundInstWithUse(bool foundInstWithUse);
+  inline int16_t GetLiveIntervalImpact();
+  inline void SetLiveIntervalImpact(int16_t impact);
 
   // Get the siganture of the parial schedule up to this node
   inline InstSignature GetSig();
@@ -764,6 +769,15 @@ inline void EnumTreeNode::SetFoundInstWithUse(bool foundInstWithUse) {
   foundInstWithUse_ = foundInstWithUse;
 }
 /**************************************************************************/
+
+inline int16_t EnumTreeNode::GetLiveIntervalImpact() {
+    return InstWithUseLiveIntervalImpact;
+}
+/**************************************************************************/
+
+inline void EnumTreeNode::SetLiveIntervalImpact(int16_t impact) {
+    InstWithUseLiveIntervalImpact = impact;
+}
 
 inline ReadyList *EnumTreeNode::GetRdyLst() { return rdyLst_; }
 /**************************************************************************/

@@ -79,6 +79,7 @@ void SchedInstruction::SetupForSchdulng(InstCount instCnt, bool isCP_FromScsr,
   SetPrdcsrNums_();
   SetScsrNums_();
   ComputeAdjustedUseCnt_();
+  ComputeLiveIntervalImpactCnt();
 }
 
 bool SchedInstruction::UseFileBounds() {
@@ -704,6 +705,10 @@ void SchedInstruction::ComputeAdjustedUseCnt_() {
     if (uses[i]->IsLiveOut())
       adjustedUseCnt_--;
   }
+}
+
+void SchedInstruction::ComputeLiveIntervalImpactCnt() {
+  liveIntervalImpactCnt_ = GetAdjustedUseCnt() - GetDefCnt();
 }
 
 InstCount SchedInstruction::GetFileSchedOrder() const {

@@ -419,6 +419,8 @@ public:
   int16_t GetAdjustedUseCnt() { return adjustedUseCnt_; }
   // Computer the adjusted use count. Update "adjustedUseCnt_".
   void ComputeAdjustedUseCnt(SchedInstruction *inst);
+  // Return the impact this instruction will have on live intervals.
+  int16_t GetLiveIntervalImpactCnt() { return liveIntervalImpactCnt_; }
 
   int16_t CmputLastUseCnt();
   int16_t GetLastUseCnt() { return lastUseCnt_; }
@@ -557,6 +559,10 @@ protected:
   // The number of uses minus live-out registers. Live-out registers are uses
   // in the artifical leaf instruction.
   int16_t adjustedUseCnt_;
+  // The impact on current live intervals where numbers less than 0 is a
+  // positive impact. Numbers greater than 0 is a negative impact on live
+  // intervals. 0 is neutral or no impact.
+  int16_t liveIntervalImpactCnt_;
   // The number of live virtual registers for which this instruction is
   // the last use. This value changes dynamically during scheduling
   int16_t lastUseCnt_;
@@ -591,6 +597,8 @@ protected:
   void SetScsrNums_();
   // Computer the adjusted use count. Update "adjustedUseCnt_".
   void ComputeAdjustedUseCnt_();
+  // Compute the impact this instruction will have on live intervals.
+  void ComputeLiveIntervalImpactCnt();
 };
 
 // A class to keep track of dynamic SchedInstruction lower bounds, i.e. lower
