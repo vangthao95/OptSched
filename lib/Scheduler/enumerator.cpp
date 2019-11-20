@@ -445,8 +445,8 @@ EnumTreeNode::ExaminedInst::~ExaminedInst() {
 Enumerator::Enumerator(DataDepGraph *dataDepGraph, MachineModel *machMdl,
                        InstCount schedUprBound, int16_t sigHashSize,
                        SchedPriorities prirts, Pruning PruningStrategy,
-                       bool SchedForRPOnly, bool enblStallEnum,
-                       Milliseconds timeout, InstCount preFxdInstCnt,
+                       bool SchedForRPOnly, bool enblStallEnum, Milliseconds timeout,
+                       SPILL_COST_FUNCTION spillCostFunc, InstCount preFxdInstCnt,
                        SchedInstruction *preFxdInsts[])
     : ConstrainedScheduler(dataDepGraph, machMdl, schedUprBound) {
   memAllocBlkSize_ = (int)timeout / TIMEOUT_TO_MEMBLOCK_RATIO;
@@ -466,6 +466,7 @@ Enumerator::Enumerator(DataDepGraph *dataDepGraph, MachineModel *machMdl,
   prune_ = PruningStrategy;
   SchedForRPOnly_ = SchedForRPOnly;
   enblStallEnum_ = enblStallEnum;
+  spillCostFunc_ = spillCostFunc;
 
   isEarlySubProbDom_ = true;
 
@@ -1137,7 +1138,10 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
   if (SchedForRPOnly_) {
     if (inst != NULL && crntNode_->FoundInstWithUse() &&
         inst->GetAdjustedUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst))
-      return false;
+      {
+
+        return false;
+      }
   }
 
   if (prune_.nodeSup) {
@@ -2000,14 +2004,13 @@ LengthCostEnumerator::LengthCostEnumerator(
     SchedInstruction *preFxdInsts[])
     : Enumerator(dataDepGraph, machMdl, schedUprBound, sigHashSize, prirts,
                  PruningStrategy, SchedForRPOnly, enblStallEnum, timeout,
-                 preFxdInstCnt, preFxdInsts) {
+                 spillCostFunc, preFxdInstCnt, preFxdInsts) {
   SetupAllocators_();
 
   costChkCnt_ = 0;
   costPruneCnt_ = 0;
   isEarlySubProbDom_ = false;
   costLwrBound_ = 0;
-  spillCostFunc_ = spillCostFunc;
   tmpHstryNode_ = new CostHistEnumTreeNode;
   if (tmpHstryNode_ == NULL)
     Logger::Fatal("Out of memory.");

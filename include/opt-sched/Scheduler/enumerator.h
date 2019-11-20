@@ -414,6 +414,9 @@ protected:
   // Should we ignore ilp and only schedule for register pressure.
   bool SchedForRPOnly_;
 
+  // The spill cost function
+  SPILL_COST_FUNCTION spillCostFunc_;
+
   // (Chris): Store the most recent matching hist node when checking for
   // history domination
   HistEnumTreeNode *mostRecentMatchingHistNode_ = nullptr;
@@ -508,7 +511,7 @@ public:
              InstCount schedUprBound, int16_t sigHashSize,
              SchedPriorities prirts, Pruning PruningStrategy,
              bool SchedForRPOnly, bool enblStallEnum, Milliseconds timeout,
-             InstCount preFxdInstCnt = 0,
+             SPILL_COST_FUNCTION spillCostFunc, InstCount preFxdInstCnt = 0,
              SchedInstruction *preFxdInsts[] = NULL);
   virtual ~Enumerator();
   virtual void Reset();
@@ -529,6 +532,8 @@ public:
   FUNC_RESULT FindSchedule(InstSchedule *sched, SchedRegion *rgn) {
     return RES_ERROR;
   }
+
+  SPILL_COST_FUNCTION GetSpillCostFunc() { return spillCostFunc_; }
 };
 /*****************************************************************************/
 
@@ -572,7 +577,6 @@ private:
   int costPruneCnt_;
   int costLwrBound_;
   MemAlloc<CostHistEnumTreeNode> *histNodeAlctr_;
-  SPILL_COST_FUNCTION spillCostFunc_;
 
   // Virtual Functions
   void SetupAllocators_();
@@ -614,7 +618,6 @@ public:
                                    SchedRegion *rgn, int costLwrBound,
                                    Milliseconds deadline);
   bool IsCostEnum();
-  SPILL_COST_FUNCTION GetSpillCostFunc() { return spillCostFunc_; }
   inline InstCount GetBestCost() { return GetBestCost_(); }
 };
 /*****************************************************************************/
