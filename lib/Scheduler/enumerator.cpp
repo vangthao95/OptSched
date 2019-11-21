@@ -10,6 +10,9 @@
 #include <memory>
 #include <sstream>
 
+//#define IS_DEBUG_RP_ONLY 1
+//#define IS_DEBUG_FLOW 1
+
 using namespace llvm::opt_sched;
 
 EnumTreeNode::EnumTreeNode() {
@@ -1140,7 +1143,7 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
         inst->GetAdjustedUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst))
       {
         if (spillCostFunc_ == SCF_SLIL) {
-            if (inst->GetLiveIntervalImpactCnt() >= crntNode_->GetLiveIntervalImpact())
+            if (inst->GetLiveIntervalImpactCnt() < crntNode_->GetLiveIntervalImpact()) 
                 return false;
         } else {
           return false;
