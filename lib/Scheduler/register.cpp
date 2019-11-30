@@ -40,8 +40,10 @@ void Register::SetIsLiveIn(bool liveIn) {
     liveIn_ = liveIn;
     // If the register is live in then it
     // is already defined and live.
-    if (liveIn)
+    if (liveIn) {
+        Logger::Info("Setting register type %d num %d is defined to true", GetType(), GetNum());
         SetIsDefined(true);
+    }
 }
 
 void Register::SetIsLiveOut(bool liveOut) { liveOut_ = liveOut; }
