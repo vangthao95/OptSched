@@ -14,6 +14,7 @@ Last Update:  Jun. 2017
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <memory>
+#include <vector>
 
 using namespace llvm;
 
@@ -24,6 +25,8 @@ namespace opt_sched {
 // times this register is defined and used.
 class Register {
 public:
+  static Vector<Register> regList[];
+  static Vector<Register> getRegList() { return regList };
   Register(int16_t type = 0, int num = 0, int physicalNumber = INVALID_VALUE);
 
   using InstSetType = SmallPtrSet<const SchedInstruction *, 8>;
@@ -68,6 +71,9 @@ public:
   // Live out registers are used by the artifical exit node.
   bool IsLiveOut() const;
   void SetIsLiveOut(bool liveOut);
+  
+  bool IsDefined();
+  void SetIsDefined(bool isDef);
 
   const Register &operator=(Register &rhs);
 
@@ -100,6 +106,7 @@ private:
   int wght_;
   bool liveIn_;
   bool liveOut_;
+  bool isDefined;
 
   // (Chris): The OptScheduler's Register class should keep track of all the
   // instructions that defined this register and all the instructions that use

@@ -3,6 +3,10 @@
 
 using namespace llvm::opt_sched;
 
+bool Register::IsDefined() { return isDefined; }
+
+void SetIsDefined(bool isDef) { isDefined = isDef; }
+
 int16_t Register::GetType() const { return type_; }
 
 int Register::GetNum() const { return num_; }
@@ -11,7 +15,10 @@ int Register::GetWght() const { return wght_; }
 
 void Register::SetType(int16_t type) { type_ = type; }
 
-void Register::SetNum(int num) { num_ = num; }
+void Register::SetNum(int num) {
+    num_ = num;
+    regList.append(this);
+}
 
 void Register::SetWght(int wght) { wght_ = wght; }
 
@@ -32,7 +39,13 @@ bool Register::IsLiveIn() const { return liveIn_; }
 
 bool Register::IsLiveOut() const { return liveOut_; }
 
-void Register::SetIsLiveIn(bool liveIn) { liveIn_ = liveIn; }
+void Register::SetIsLiveIn(bool liveIn) {
+    liveIn_ = liveIn;
+    // If the register is live in then it
+    // is already defined and live.
+    if (liveIn)
+        SetIsDefined(true);
+}
 
 void Register::SetIsLiveOut(bool liveOut) { liveOut_ = liveOut; }
 
@@ -136,6 +149,7 @@ Register::Register(int16_t type, int num, int physicalNumber) {
   isSpillCnddt_ = false;
   liveIn_ = false;
   liveOut_ = false;
+  isDefined = false;
 }
 
 RegisterFile::RegisterFile() {
