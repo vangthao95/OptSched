@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <chrono>
 #include <string>
-#include <vector>
 
 #define DEBUG_TYPE "optsched"
 

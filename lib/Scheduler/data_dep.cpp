@@ -3251,14 +3251,24 @@ void DataDepGraph::SetPrblmtc() { isPrblmtc_ = true; }
 bool DataDepGraph::IsPrblmtc() { return isPrblmtc_; }
 
 bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
-#ifdef IS_DEBUG_RP_ONLY
-  Logger::Info("Testing inst %d", inst->GetNum());
-#endif
+  Logger::Info("    Testing inst %d", inst->GetNum());
   LinkedList<GraphNode> *rcrsvSuccs = inst->GetRcrsvNghbrLst(DIR_FRWRD);
   for (GraphNode *succ = rcrsvSuccs->GetFrstElmnt(); succ != NULL;
        succ = rcrsvSuccs->GetNxtElmnt()) {
     SchedInstruction *succInst = static_cast<SchedInstruction *>(succ);
+    Logger::Info("        Current successor inst: %d", succInst->GetNum());
+    Register **uses;
+    Register *use;
     
+    int useCnt = succInst->GetUses(uses);
+    for (int i = 0; i < useCnt; i++) {
+        use = uses[i];
+        Logger::Info("            uses register number %d", use->GetNum());
+        if (use->IsDefined())
+            Logger::Info("                is live");
+        else
+            Logger::Info("                is not live");
+    }
     int curInstAdjUseCnt = succInst->GetAdjustedUseCnt();
     // Ignore successor instructions that does not close live intervals
     if (curInstAdjUseCnt == 0)

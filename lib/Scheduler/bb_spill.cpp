@@ -505,6 +505,7 @@ void BBWithSpill::UpdateSpillInfoForSchdul_(SchedInstruction *inst,
     regType = def->GetType();
     regNum = def->GetNum();
     physRegNum = def->GetPhysicalNumber();
+    def->SetIsDefined(true);
 
 #ifdef IS_DEBUG_REG_PRESSURE
     Logger::Info("Inst %d defines reg %d of type %d and %d uses",
@@ -667,6 +668,7 @@ void BBWithSpill::UpdateSpillInfoForUnSchdul_(SchedInstruction *inst) {
     regType = def->GetType();
     regNum = def->GetNum();
     physRegNum = def->GetPhysicalNumber();
+    def->SetIsDefined(false);
 
 #ifdef IS_DEBUG_REG_PRESSURE
     Logger::Info("Inst %d defines reg %d of type %d and %d uses",
