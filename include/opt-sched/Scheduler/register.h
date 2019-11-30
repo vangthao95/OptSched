@@ -25,8 +25,6 @@ namespace opt_sched {
 // times this register is defined and used.
 class Register {
 public:
-  static Vector<Register> regList[];
-  static Vector<Register> getRegList() { return regList };
   Register(int16_t type = 0, int num = 0, int physicalNumber = INVALID_VALUE);
 
   using InstSetType = SmallPtrSet<const SchedInstruction *, 8>;

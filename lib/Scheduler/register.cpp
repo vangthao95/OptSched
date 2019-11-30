@@ -5,7 +5,7 @@ using namespace llvm::opt_sched;
 
 bool Register::IsDefined() { return isDefined; }
 
-void SetIsDefined(bool isDef) { isDefined = isDef; }
+void Register::SetIsDefined(bool isDef) { isDefined = isDef; }
 
 int16_t Register::GetType() const { return type_; }
 
@@ -15,10 +15,7 @@ int Register::GetWght() const { return wght_; }
 
 void Register::SetType(int16_t type) { type_ = type; }
 
-void Register::SetNum(int num) {
-    num_ = num;
-    regList.append(this);
-}
+void Register::SetNum(int num) { num_ = num; }
 
 void Register::SetWght(int wght) { wght_ = wght; }
 
