@@ -3271,7 +3271,7 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
         if (use->IsLiveOut())
           continue;
         // Successor instruction uses a live register
-        else if (use->IsDefined()) {
+        else if (use->IsDefined()) 
             return true;
     }
   }
