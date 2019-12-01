@@ -506,8 +506,16 @@ void BBWithSpill::UpdateSpillInfoForSchdul_(SchedInstruction *inst,
     regNum = def->GetNum();
     physRegNum = def->GetPhysicalNumber();
     Logger::Info("Schedule: Register type %d num %d current isDef status BEFORE", def->GetType(), def->GetNum());
+    if (def->IsDefined())
+      Logger::Info("    true");
+    else
+      Logger::Info("    false");
     def->SetIsDefined(true);
     Logger::Info("Schedule: Register type %d num %d current isDef status AFTER", def->GetType(), def->GetNum());
+    if (def->IsDefined())
+      Logger::Info("    true");
+    else
+      Logger::Info("    false");
 
 #ifdef IS_DEBUG_REG_PRESSURE
     Logger::Info("Inst %d defines reg %d of type %d and %d uses",
@@ -671,8 +679,16 @@ void BBWithSpill::UpdateSpillInfoForUnSchdul_(SchedInstruction *inst) {
     regNum = def->GetNum();
     physRegNum = def->GetPhysicalNumber();
     Logger::Info("Unschedule: Register type %d num %d current isDef status BEFORE", def->GetType(), def->GetNum());
+    if (def->IsDefined())
+      Logger::Info("    true");
+    else
+      Logger::Info("    false");
     def->SetIsDefined(false);
     Logger::Info("Unschedule: Register type %d num %d current isDef status AFTER", def->GetType(), def->GetNum());
+    if (def->IsDefined())
+      Logger::Info("    true");
+    else
+      Logger::Info("    false");
 
 #ifdef IS_DEBUG_REG_PRESSURE
     Logger::Info("Inst %d defines reg %d of type %d and %d uses",
