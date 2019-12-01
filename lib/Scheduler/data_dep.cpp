@@ -3251,7 +3251,9 @@ void DataDepGraph::SetPrblmtc() { isPrblmtc_ = true; }
 bool DataDepGraph::IsPrblmtc() { return isPrblmtc_; }
 
 bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
-  Logger::Info("    Testing inst %d", inst->GetNum());
+#ifdef IS_DEBUG_RP_ONLY
+  Logger::Info("Testing inst %d", inst->GetNum());
+#endif
   LinkedList<GraphNode> *rcrsvSuccs = inst->GetRcrsvNghbrLst(DIR_FRWRD);
   for (GraphNode *succ = rcrsvSuccs->GetFrstElmnt(); succ != NULL;
        succ = rcrsvSuccs->GetNxtElmnt()) {
@@ -3272,7 +3274,7 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
           continue;
         // Successor instruction uses a live register
         else if (use->IsDefined()) 
-            return true;
+          return true;
     }
   }
 // Return false if there is no recursive successor of inst
