@@ -344,6 +344,7 @@ void BBWithSpill::InitForCostCmputtn_() {
   for (i = 0; i < regTypeCnt_; i++) {
     regFiles_[i].ResetCrntUseCnts();
     regFiles_[i].ResetCrntLngths();
+    regFiles_[i].ResetIsDefs();
   }
 
   for (i = 0; i < regTypeCnt_; i++) {
@@ -505,22 +506,13 @@ void BBWithSpill::UpdateSpillInfoForSchdul_(SchedInstruction *inst,
     regType = def->GetType();
     regNum = def->GetNum();
     physRegNum = def->GetPhysicalNumber();
-    Logger::Info("Schedule: Register type %d num %d current isDef status BEFORE", def->GetType(), def->GetNum());
-    if (def->IsDefined())
-      Logger::Info("    true");
-    else
-      Logger::Info("    false");
-    def->SetIsDefined(true);
-    Logger::Info("Schedule: Register type %d num %d current isDef status AFTER", def->GetType(), def->GetNum());
-    if (def->IsDefined())
-      Logger::Info("    true");
-    else
-      Logger::Info("    false");
 
 #ifdef IS_DEBUG_REG_PRESSURE
     Logger::Info("Inst %d defines reg %d of type %d and %d uses",
                  inst->GetNum(), regNum, regType, def->GetUseCnt());
 #endif
+
+    def->SetIsDefined(true);
 
     // if (def->GetUseCnt() > 0) {
 
@@ -678,22 +670,13 @@ void BBWithSpill::UpdateSpillInfoForUnSchdul_(SchedInstruction *inst) {
     regType = def->GetType();
     regNum = def->GetNum();
     physRegNum = def->GetPhysicalNumber();
-    Logger::Info("Unschedule: Register type %d num %d current isDef status BEFORE", def->GetType(), def->GetNum());
-    if (def->IsDefined())
-      Logger::Info("    true");
-    else
-      Logger::Info("    false");
-    def->SetIsDefined(false);
-    Logger::Info("Unschedule: Register type %d num %d current isDef status AFTER", def->GetType(), def->GetNum());
-    if (def->IsDefined())
-      Logger::Info("    true");
-    else
-      Logger::Info("    false");
 
 #ifdef IS_DEBUG_REG_PRESSURE
     Logger::Info("Inst %d defines reg %d of type %d and %d uses",
                  inst->GetNum(), regNum, regType, def->GetUseCnt());
 #endif
+
+    def->SetIsDefined(false);
 
     // if (def->GetUseCnt() > 0) {
     assert(liveRegs_[regType].GetBit(regNum));

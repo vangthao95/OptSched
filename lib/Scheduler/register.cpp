@@ -36,15 +36,7 @@ bool Register::IsLiveIn() const { return liveIn_; }
 
 bool Register::IsLiveOut() const { return liveOut_; }
 
-void Register::SetIsLiveIn(bool liveIn) {
-    liveIn_ = liveIn;
-    // If the register is live in then it
-    // is already defined and live.
-    if (liveIn) {
-        Logger::Info("Setting register type %d num %d is defined to true", GetType(), GetNum());
-        SetIsDefined(true);
-    }
-}
+void Register::SetIsLiveIn(bool liveIn) { liveIn_ = liveIn; }
 
 void Register::SetIsLiveOut(bool liveOut) { liveOut_ = liveOut; }
 
@@ -85,6 +77,10 @@ int Register::GetCrntLngth() const { return crntLngth_; }
 void Register::IncrmntCrntLngth() { crntLngth_++; }
 
 void Register::DcrmntCrntLngth() { crntLngth_--; }
+
+void Register::ResetIsDef() {
+    SetIsDefined(false);
+}
 
 const Register &Register::operator=(Register &rhs) {
   if (this != &rhs) {
@@ -173,6 +169,12 @@ void RegisterFile::ResetCrntUseCnts() {
 void RegisterFile::ResetCrntLngths() {
   for (int i = 0; i < getCount(); i++) {
     Regs[i]->ResetCrntLngth();
+  }
+}
+
+void RegisterFile::ResetIsDefs() {
+  for (int i = 0; i < getCount(); i++) {
+    Regs[i]->ResetIsDef();
   }
 }
 

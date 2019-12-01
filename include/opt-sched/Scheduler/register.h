@@ -72,6 +72,7 @@ public:
   
   bool IsDefined();
   void SetIsDefined(bool isDef);
+  void ResetIsDef();
 
   const Register &operator=(Register &rhs);
 
@@ -144,6 +145,7 @@ public:
 
   void ResetCrntUseCnts();
   void ResetCrntLngths();
+  void ResetIsDefs();
 
   int FindPhysRegCnt();
   int GetPhysRegCnt() const;
