@@ -3263,6 +3263,13 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
     // Ignore successor instructions that does not close live intervals
     if (curInstAdjUseCnt == 0)
       continue;
+    
+    // Ignore successor instructions that defines a
+    // greater amount of registers than that is used.
+    // This will not make a positive change on register
+    // pressure so it can be ignored.
+    if (curInstAdjUseCnt < succInst->GetDefCnt())
+      continue;
 
     Register **uses;
     Register *use;
