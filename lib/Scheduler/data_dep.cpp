@@ -3268,7 +3268,7 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
     // greater amount of registers than that is used.
     // This will not make a positive change on register
     // pressure so it can be ignored.
-    if (curInstAdjUseCnt < succInst->GetDefCnt())
+    if (curInstAdjUseCnt <= succInst->GetDefCnt())
       continue;
 
     Register **uses;

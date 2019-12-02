@@ -10,8 +10,6 @@
 #include <memory>
 #include <sstream>
 
-#define IS_DEBUG_RP_ONLY 1
-
 using namespace llvm::opt_sched;
 
 EnumTreeNode::EnumTreeNode() {
@@ -1874,7 +1872,7 @@ bool Enumerator::IsUseInRdyLst_() {
     int curInstAdjUseCnt = inst->GetAdjustedUseCnt();
     // Check if the current instruction has a use
     // that will reduce register pressure
-    if ((curInstAdjUseCnt != 0 && curInstAdjUseCnt >= inst->GetDefCnt()) ||
+    if ((curInstAdjUseCnt != 0 && curInstAdjUseCnt > inst->GetDefCnt()) ||
         dataDepGraph_->DoesFeedUser(inst)) { // or if it feeds a user
       foundUse = true;
 #ifdef IS_DEBUG_RP_ONLY
