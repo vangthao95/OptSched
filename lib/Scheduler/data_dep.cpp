@@ -3251,6 +3251,9 @@ void DataDepGraph::SetPrblmtc() { isPrblmtc_ = true; }
 bool DataDepGraph::IsPrblmtc() { return isPrblmtc_; }
 
 bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
+#ifdef IS_DEBUG_RP_ONLY
+  Logger::Info("Testing inst %d", inst->GetNum());
+#endif
   LinkedList<GraphNode> *rcrsvSuccs = inst->GetRcrsvNghbrLst(DIR_FRWRD);
   for (GraphNode *succ = rcrsvSuccs->GetFrstElmnt(); succ != NULL;
        succ = rcrsvSuccs->GetNxtElmnt()) {
