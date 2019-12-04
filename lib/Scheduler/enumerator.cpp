@@ -1136,7 +1136,8 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
   // if another instruction in the ready list does use a register.
   if (SchedForRPOnly_) {
     if (inst != NULL && crntNode_->FoundInstWithUse() &&
-        inst->GetAdjustedUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst))
+        inst->GetAdjustedUseCnt() <= inst->GetDefCnt() &&
+        !dataDepGraph_->DoesFeedUser(inst))
       return false;
   }
 
