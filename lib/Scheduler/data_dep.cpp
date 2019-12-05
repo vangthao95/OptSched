@@ -3255,10 +3255,9 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
   Logger::Info("Testing inst %d", inst->GetNum());
 #endif
   LinkedList<GraphNode> *rcrsvSuccs = inst->GetRcrsvNghbrLst(DIR_FRWRD);
-  for (GraphNode *succ = rcrsvSuccs->GetFrstElmnt(); succ != NULL;
-       succ = rcrsvSuccs->GetNxtElmnt()) {
+  for (GraphNode *succ = rcrsvSuccs->GetLastElmnt(); succ != NULL;
+       succ = rcrsvSuccs->GetPrevElmnt()) {
     SchedInstruction *succInst = static_cast<SchedInstruction *>(succ);
-
     int curInstAdjUseCnt = succInst->GetAdjustedUseCnt();
     // Ignore successor instructions that does not close live intervals
     if (curInstAdjUseCnt == 0)
