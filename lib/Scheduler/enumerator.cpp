@@ -1137,8 +1137,10 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
   if (SchedForRPOnly_) {
     if (inst != NULL && crntNode_->FoundInstWithUse() &&
         inst->GetAdjustedUseCnt() <= inst->GetDefCnt() &&
-        !dataDepGraph_->DoesFeedUser(inst))
-      return false;
+        !dataDepGraph_->DoesFeedUser(inst)) {
+      stats::rpOnlyPruning++;
+      return false;  
+    }
   }
 
   if (prune_.nodeSup) {
@@ -1895,9 +1897,12 @@ void Enumerator::PrintLog_() {
   Logger::Info("--------------------------------------------------\n");
 
   Logger::Info("Total nodes examined: %lld\n", GetNodeCnt());
-  Logger::Info("History table includes %d entries.\n",
-               exmndSubProbs_->GetEntryCnt());
-  Logger::GetLogStream() << stats::historyEntriesPerIteration;
+  Logger::Info("Total feasibility tests: ");
+  Logger::GetLogStream() << stats::feasibilityTests;
+  Logger::Info("Total Feasibility hits: ");
+  Logger::GetLogStream() << stats::feasibilityHits;
+  Logger::Info("Total pruned by RP-only: ");
+  Logger::GetLogStream() << stats::rpOnlyPruning;
   Logger::Info("--------------------------------------------------\n");
 }
 /*****************************************************************************/

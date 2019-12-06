@@ -376,6 +376,7 @@ extern IndexedIntSetStat dependenceTypeLatencies;
 
 extern IntStat legalListSchedulerInstructionHits;
 extern IntStat illegalListSchedulerInstructionHits;
+extern IntStat rpOnlyPruning;
 
 } // namespace stats
 } // namespace opt_sched

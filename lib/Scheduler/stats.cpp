@@ -249,6 +249,7 @@ IntStat
     legalListSchedulerInstructionHits("Legal list scheduler instruction hits");
 IntStat illegalListSchedulerInstructionHits(
     "Illegal list scheduler instruction hits");
+IntStat rpOnlyPruning("RP-only infeasibility hits");
 
 } // namespace stats
 } // namespace opt_sched
