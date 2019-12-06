@@ -1069,16 +1069,16 @@ bool Enumerator::FindNxtFsblBrnch_(EnumTreeNode *&newNode) {
 
     exmndNodeCnt_++;
 
-#ifdef IS_DEBUG_INFSBLTY_TESTS
+//#ifdef IS_DEBUG_INFSBLTY_TESTS
     stats::feasibilityTests++;
-#endif
+//#endif
     isNodeDmntd = isRlxInfsbl = false;
     isLngthFsbl = true;
 
     if (ProbeBranch_(inst, newNode, isNodeDmntd, isRlxInfsbl, isLngthFsbl)) {
-#ifdef IS_DEBUG_INFSBLTY_TESTS
+//#ifdef IS_DEBUG_INFSBLTY_TESTS
       stats::feasibilityHits++;
-#endif
+//#endif
       return true;
     } else {
       RestoreCrntState_(inst, newNode);
@@ -2087,7 +2087,9 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
                                                        Milliseconds deadline) {
   rgn_ = rgn;
   costLwrBound_ = costLwrBound;
+  PrintLog_();
   FUNC_RESULT rslt = FindFeasibleSchedule_(sched, trgtLngth, deadline);
+  PrintLog_();
 
 #ifdef IS_DEBUG_TRACE_ENUM
   stats::costChecksPerLength.Record(costChkCnt_);
