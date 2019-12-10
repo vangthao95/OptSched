@@ -316,6 +316,9 @@ protected:
   friend class EnumTreeNode;
   friend class HistEnumTreeNode;
   friend class CostHistEnumTreeNode;
+  int fTests;
+  int fHits;
+  int rpOnlyPruning;
 
   // TODO(max): Document.
   bool isCnstrctd_;
