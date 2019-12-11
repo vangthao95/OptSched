@@ -460,10 +460,6 @@ Enumerator::Enumerator(DataDepGraph *dataDepGraph, MachineModel *machMdl,
     memAllocBlkSize_ = 1;
   }
 
-  fTests = 0;
-  fHits = 0;
-  rpOnlyPruning = 0;
-
   isCnstrctd_ = false;
   rdyLst_ = NULL;
   prirts_ = prirts;
@@ -660,9 +656,6 @@ bool Enumerator::Initialize_(InstSchedule *sched, InstCount trgtLngth) {
   minUnschduldTplgclOrdr_ = 0;
   backTrackCnt_ = 0;
   iterNum_++;
-  fTests = 0;
-  fHits = 0;
-  rpOnlyPruning = 0;
 
   if (ConstrainedScheduler::Initialize_(trgtSchedLngth_, fxdLst_) == false) {
     return false;
@@ -1076,18 +1069,16 @@ bool Enumerator::FindNxtFsblBrnch_(EnumTreeNode *&newNode) {
 
     exmndNodeCnt_++;
 
-#ifdef IS_DEBUG_INFSBLTY_TESTS
+//#ifdef IS_DEBUG_INFSBLTY_TESTS
     stats::feasibilityTests++;
-#endif
-    fTests++;
+//#endif
     isNodeDmntd = isRlxInfsbl = false;
     isLngthFsbl = true;
 
     if (ProbeBranch_(inst, newNode, isNodeDmntd, isRlxInfsbl, isLngthFsbl)) {
-#ifdef IS_DEBUG_INFSBLTY_TESTS
+//#ifdef IS_DEBUG_INFSBLTY_TESTS
       stats::feasibilityHits++;
-#endif
-      fHits++;
+//#endif
       return true;
     } else {
       RestoreCrntState_(inst, newNode);
@@ -1147,7 +1138,7 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
     if (inst != NULL && crntNode_->FoundInstWithUse() &&
         inst->GetAdjustedUseCnt() <= inst->GetDefCnt() &&
         !dataDepGraph_->DoesFeedUser(inst)) {
-      rpOnlyPruning++;
+      stats::rpOnlyPruning++;
       return false;  
     }
   }
@@ -1904,17 +1895,14 @@ bool Enumerator::IsUseInRdyLst_() {
 
 void Enumerator::PrintLog_() {
   Logger::Info("--------------------------------------------------\n");
+
   Logger::Info("Total nodes examined: %lld\n", GetNodeCnt());
-  Logger::Info("Feasibility tests: %d\n", fTests);
-  Logger::Info("Feasbility hits: %d\n", fHits);
-  Logger::Info("Rp-only pruning: %d\n", rpOnlyPruning);
-/* 
-  Logger::GetLogStream() << "TEST" << stats::feasibilityTests;
+  Logger::Info("Total feasibility tests: ");
+  Logger::GetLogStream() << stats::feasibilityTests;
   Logger::Info("Total Feasibility hits: ");
   Logger::GetLogStream() << stats::feasibilityHits;
   Logger::Info("Total pruned by RP-only: ");
   Logger::GetLogStream() << stats::rpOnlyPruning;
-*/
   Logger::Info("--------------------------------------------------\n");
 }
 /*****************************************************************************/
@@ -2099,7 +2087,9 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
                                                        Milliseconds deadline) {
   rgn_ = rgn;
   costLwrBound_ = costLwrBound;
+  PrintLog_();
   FUNC_RESULT rslt = FindFeasibleSchedule_(sched, trgtLngth, deadline);
+  PrintLog_();
 
 #ifdef IS_DEBUG_TRACE_ENUM
   stats::costChecksPerLength.Record(costChkCnt_);
@@ -2107,7 +2097,7 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
   stats::feasibleSchedulesPerLength.Record(fsblSchedCnt_);
   stats::improvementsPerLength.Record(imprvmntCnt_);
 #endif
-  PrintLog_();
+
   return rslt;
 }
 /*****************************************************************************/
