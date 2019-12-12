@@ -1135,13 +1135,45 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
   // defines a register but does not use any, we can prune this branch
   // if another instruction in the ready list does use a register.
   if (SchedForRPOnly_) {
-    if (inst != NULL && crntNode_->FoundInstWithUse() &&
-        inst->GetAdjustedUseCnt() <= inst->GetDefCnt() &&
-        !dataDepGraph_->DoesFeedUser(inst)) {
-      stats::rpOnlyPruning++;
-      return false;  
+    if (inst != NULL && crntNode_->FoundInstWithUse()) { 
+      int curInstAdjUseCnt = inst->GetAdjustedUseCnt();
+      int curInstDefCnt = inst->GetDefCnt();
+      bool checkUse = true;
+      // If there is a use and it is more than the defs
+      // then don't prune this instruction
+      if (curInstAdjUseCnt != 0) && 
+          curInstAdjUseCnt > curInstDefCnt) {
+        checkUse = false;
+      }
+      // If the use and def cnt are the same
+      // then check if this intruction closes a register
+      else if (curInstAdjUseCnt == curInstDefCnt) {
+        Register **uses;
+        Register *use;
+        int useCnt = inst->GetUses(uses);
+        for (int i = 0; i < useCnt; i++) {
+          use = uses[i];
+          if (use->IsLiveOut())
+            continue;
+          else {
+            // If this instruction closes a register then
+            // don't prun this instruction.
+            if (use->GetCrntUseCnt()+1 == use->GetUseCnt) {
+              checkUse = false;
+              break;
+            }
+          }
+        }
+      }
+    
+      // If adj use == def and != 0, check if closes a reg
+      if (checkUse && !dataDepGraph->DoesFeedUser(inst)) {
+        rpOnlyPruning++;
+        return false;  
+      }
     }
   }
+
 
   if (prune_.nodeSup) {
     if (inst != NULL)

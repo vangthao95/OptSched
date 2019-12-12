@@ -794,6 +794,7 @@ void ScheduleDAGOptSched::runSchedPass(SchedPassStrategy S) {
 }
 
 void ScheduleDAGOptSched::scheduleOptSchedMinRP() {
+  Logger::Info("Starting first pass");
   LLVM_DEBUG(dbgs() << "Starting first pass through\n");
   LatencyPrecision = LTP_UNITY;
   // Set times for the first pass
@@ -802,9 +803,11 @@ void ScheduleDAGOptSched::scheduleOptSchedMinRP() {
   HeurSchedType = SCHED_LIST;
 
   schedule();
+  Logger::Info("End of first pass");
 }
 
 void ScheduleDAGOptSched::scheduleOptSchedBalanced() {
+  Logger::Info("Starting second pass");
   LLVM_DEBUG(dbgs() << "Starting second pass through\n");
   SecondPass = true;
   LatencyPrecision = LTP_ROUGH;
@@ -824,9 +827,10 @@ void ScheduleDAGOptSched::scheduleOptSchedBalanced() {
   // Disable RP-only for 2nd pass.
   SchedForRPOnly = false;
 
-
   schedule();
+  Logger::Info("End of second pass");
 }
+
 
 bool ScheduleDAGOptSched::isSimRegAllocEnabled() const {
   // This will return false if only the list schedule is allocated.
