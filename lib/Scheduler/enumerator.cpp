@@ -543,6 +543,9 @@ Enumerator::Enumerator(DataDepGraph *dataDepGraph, MachineModel *machMdl,
   preFxdInsts_ = preFxdInsts;
 
   isCnstrctd_ = true;
+  stats::feasibilityTests.Set(0);
+  stats::feasibilityHits.Set(0);
+  stats::rpOnlyPruning.Set(0);
 }
 /****************************************************************************/
 
@@ -1894,11 +1897,8 @@ void Enumerator::PrintLog_() {
   Logger::Info("--------------------------------------------------\n");
 
   Logger::Info("Total nodes examined: %lld\n", GetNodeCnt());
-  Logger::Info("Total feasibility tests: ");
   Logger::GetLogStream() << stats::feasibilityTests;
-  Logger::Info("Total Feasibility hits: ");
   Logger::GetLogStream() << stats::feasibilityHits;
-  Logger::Info("Total pruned by RP-only: ");
   Logger::GetLogStream() << stats::rpOnlyPruning;
   Logger::Info("--------------------------------------------------\n");
 }
@@ -2084,11 +2084,7 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
                                                        Milliseconds deadline) {
   rgn_ = rgn;
   costLwrBound_ = costLwrBound;
-  Logger::Info("ENUMERATOR1 PRINT");
-  PrintLog_();
   FUNC_RESULT rslt = FindFeasibleSchedule_(sched, trgtLngth, deadline);
-  Logger::Info("ENUMERATOR2 PRINT");
-  PrintLog_();
 
 #ifdef IS_DEBUG_TRACE_ENUM
   stats::costChecksPerLength.Record(costChkCnt_);

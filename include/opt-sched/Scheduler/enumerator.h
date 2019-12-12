@@ -485,8 +485,6 @@ protected:
   virtual void FreeAllocators_();
   virtual void ResetAllocators_();
 
-  void PrintLog_();
-
   FUNC_RESULT FindFeasibleSchedule_(InstSchedule *sched, InstCount trgtLngth,
                                     Milliseconds deadline);
 
@@ -512,6 +510,7 @@ public:
              SchedInstruction *preFxdInsts[] = NULL);
   virtual ~Enumerator();
   virtual void Reset();
+  void PrintLog_();
 
   // Get the number of nodes that have been examined
   inline uint64_t GetNodeCnt();
