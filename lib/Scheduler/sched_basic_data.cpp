@@ -27,6 +27,7 @@ SchedInstruction::SchedInstruction(InstCount num, const string &name,
   memAllocd_ = false;
   sortedPrdcsrLst_ = NULL;
   sortedScsrLst_ = NULL;
+  defineLiveOutReg = false;
 
   crtclPathFrmRcrsvScsr_ = NULL;
   crtclPathFrmRcrsvPrdcsr_ = NULL;
@@ -79,6 +80,7 @@ void SchedInstruction::SetupForSchdulng(InstCount instCnt, bool isCP_FromScsr,
   SetPrdcsrNums_();
   SetScsrNums_();
   ComputeAdjustedUseCnt_();
+  ComputeDefineLiveOutReg();
 }
 
 bool SchedInstruction::UseFileBounds() {
@@ -704,6 +706,26 @@ void SchedInstruction::ComputeAdjustedUseCnt_() {
     if (uses[i]->IsLiveOut())
       adjustedUseCnt_--;
   }
+}
+
+void SchedInstruction::ComputeDefineLiveOutReg() {
+    Register **defs;
+    int defCnt = GetDefs(defs);
+    
+    for (int i = 0; i < defCnt; i++) {
+        if (defs[i]->IsLiveOut()) {
+            SetDefineLiveOutReg(true);
+            break;
+        }
+    }
+}
+
+void SchedInstruction::SetDefineLiveOutReg(bool defLiveOut) {
+    defineLiveOutReg = defLiveOut;
+}
+
+bool SchedInstruction::DefineLiveOutReg() {
+    return defineLiveOutReg;
 }
 
 InstCount SchedInstruction::GetFileSchedOrder() const {

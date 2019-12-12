@@ -3260,14 +3260,8 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
     SchedInstruction *succInst = static_cast<SchedInstruction *>(succ);
     int curInstAdjUseCnt = succInst->GetAdjustedUseCnt();
     // Ignore successor instructions that does not close live intervals
-    if (curInstAdjUseCnt == 0)
-      continue;
-    
-    // Ignore successor instructions that defines a
-    // greater amount of registers than that is used.
-    // This will not make a positive change on register
-    // pressure so it can be ignored.
-    if (curInstAdjUseCnt <= succInst->GetDefCnt())
+    // or defines a live-out register
+    if (curInstAdjUseCnt == 0 || succInst->DefineLiveOutReg())
       continue;
 
     Register **uses;
@@ -3275,11 +3269,12 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
     int useCnt = succInst->GetUses(uses);
     for (int i = 0; i < useCnt; i++) {
         use = uses[i];
-        // Ignore live-out registers
+        // Ignore live-out registers uses
         if (use->IsLiveOut())
           continue;
         // Successor instruction uses a live register
-        else if (use->IsDefined()) 
+        // and does not define a live-out register
+        else if (use->IsDefined())
           return true;
     }
   }

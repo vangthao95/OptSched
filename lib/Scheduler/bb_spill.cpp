@@ -880,7 +880,9 @@ FUNC_RESULT BBWithSpill::Enumerate_(Milliseconds startTime,
   }
   if (timeout)
     rslt = RES_TIMEOUT;
-
+  
+  Logger::Info("BB_SPILL PRINT");
+  enumrtr_->PrintLog_();
   return rslt;
 }
 /*****************************************************************************/

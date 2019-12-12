@@ -186,6 +186,10 @@ public:
   // Returns the number of successors in this instructions transitive
   // closure (i.e. total number of descendants).
   InstCount GetRcrsvScsrCnt() const;
+  
+  // Sets defineLiveOutReg
+  void SetDefineLiveOutReg(bool defLiveOut);
+  bool DefineLiveOutReg();
 
   /***************************************************************************
    * Iterators                                                               *
@@ -442,6 +446,10 @@ protected:
   InstCount fileSchedOrder_;
   // The issue cycle of this instruction in the input file's schedule.
   InstCount fileSchedCycle_;
+  // Compute if an instruction defines a live-out register.
+  void ComputeDefineLiveOutReg();
+  // Whether this instruction defines a live out register.
+  bool defineLiveOutReg;
 
   // The number of predecessors of this instruction.
   InstCount prdcsrCnt_;

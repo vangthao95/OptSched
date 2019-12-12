@@ -1135,42 +1135,10 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
   // defines a register but does not use any, we can prune this branch
   // if another instruction in the ready list does use a register.
   if (SchedForRPOnly_) {
-    if (inst != NULL && crntNode_->FoundInstWithUse()) { 
-      int curInstAdjUseCnt = inst->GetAdjustedUseCnt();
-      int curInstDefCnt = inst->GetDefCnt();
-      bool checkUse = true;
-      // If there is a use and it is more than the defs
-      // then don't prune this instruction
-      if (curInstAdjUseCnt != 0) && 
-          curInstAdjUseCnt > curInstDefCnt) {
-        checkUse = false;
-      }
-      // If the use and def cnt are the same
-      // then check if this intruction closes a register
-      else if (curInstAdjUseCnt == curInstDefCnt) {
-        Register **uses;
-        Register *use;
-        int useCnt = inst->GetUses(uses);
-        for (int i = 0; i < useCnt; i++) {
-          use = uses[i];
-          if (use->IsLiveOut())
-            continue;
-          else {
-            // If this instruction closes a register then
-            // don't prun this instruction.
-            if (use->GetCrntUseCnt()+1 == use->GetUseCnt) {
-              checkUse = false;
-              break;
-            }
-          }
-        }
-      }
-    
-      // If adj use == def and != 0, check if closes a reg
-      if (checkUse && !dataDepGraph->DoesFeedUser(inst)) {
-        rpOnlyPruning++;
-        return false;  
-      }
+    if (inst != NULL && crntNode_->FoundInstWithUse() &&
+        inst->GetAdjustedUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst)) { 
+      stats::rpOnlyPruning++;
+      return false;  
     }
   }
 
@@ -1904,11 +1872,8 @@ bool Enumerator::IsUseInRdyLst_() {
   for (int i = 0; i < brnchCnt - 1; i++) {
     inst = rdyLst_->GetNextPriorityInst();
     assert(inst != NULL);
-    int curInstAdjUseCnt = inst->GetAdjustedUseCnt();
-    // Check if the current instruction has a use
-    // that will reduce register pressure
-    if ((curInstAdjUseCnt != 0 && curInstAdjUseCnt > inst->GetDefCnt()) ||
-        dataDepGraph_->DoesFeedUser(inst)) { // or if it feeds a user
+    if ((inst->GetAdjustedUseCnt() != 0 && !inst->DefineLiveOutReg()) ||
+        dataDepGraph_->DoesFeedUser(inst)) {
       foundUse = true;
 #ifdef IS_DEBUG_RP_ONLY
       Logger::Info("Inst %d uses a register", inst->GetNum());
@@ -2119,8 +2084,10 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
                                                        Milliseconds deadline) {
   rgn_ = rgn;
   costLwrBound_ = costLwrBound;
+  Logger::Info("ENUMERATOR1 PRINT");
   PrintLog_();
   FUNC_RESULT rslt = FindFeasibleSchedule_(sched, trgtLngth, deadline);
+  Logger::Info("ENUMERATOR2 PRINT");
   PrintLog_();
 
 #ifdef IS_DEBUG_TRACE_ENUM
