@@ -12,6 +12,9 @@
 
 using namespace llvm::opt_sched;
 
+#define IS_DEBUG_FLOW 1
+#define IS_DEBUG_RP_ONLY 1
+
 EnumTreeNode::EnumTreeNode() {
   isCnstrctd_ = false;
   isClean_ = true;
@@ -1139,7 +1142,7 @@ bool Enumerator::ProbeBranch_(SchedInstruction *inst, EnumTreeNode *&newNode,
   // if another instruction in the ready list does use a register.
   if (SchedForRPOnly_) {
     if (inst != NULL && crntNode_->FoundInstWithUse() &&
-        inst->GetAdjustedUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst)) { 
+        inst->GetUseCnt() == 0 && !dataDepGraph_->DoesFeedUser(inst)) { 
       stats::rpOnlyPruning++;
       return false;  
     }

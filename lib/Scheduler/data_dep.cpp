@@ -13,6 +13,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 
+#define IS_DEBUG_RP_ONLY 1
+
 // only print pressure if enabled by sched.ini
 extern bool OPTSCHED_gPrintSpills;
 
@@ -3258,6 +3260,9 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
   for (GraphNode *succ = rcrsvSuccs->GetLastElmnt(); succ != NULL;
        succ = rcrsvSuccs->GetPrevElmnt()) {
     SchedInstruction *succInst = static_cast<SchedInstruction *>(succ);
+#ifdef IS_DEBUG_RP_ONLY
+    Logger::Info("Testing successor inst %d", succInst->GetNum());
+#endif    
     int curInstAdjUseCnt = succInst->GetAdjustedUseCnt();
     // Ignore successor instructions that does not close live intervals
     // or defines a live-out register
@@ -3274,8 +3279,12 @@ bool DataDepGraph::DoesFeedUser(SchedInstruction *inst) {
           continue;
         // Successor instruction uses a live register
         // and does not define a live-out register
-        else if (use->IsDefined())
+        else if (use->IsDefined()) {
+#ifdef IS_DEBUG_RP_ONLY
+          Logger::Info("Successor inst %d uses a live register", succInst->GetNum());
+#endif		
           return true;
+        }
     }
   }
 // Return false if there is no recursive successor of inst
