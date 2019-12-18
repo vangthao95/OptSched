@@ -36,12 +36,13 @@ private:
   // Vector of scheduling passes to execute.
   SmallVector<SchedPassStrategy, 4> SchedPasses;
 
+protected:
+
   // Vector of regions recorded for later rescheduling
   SmallVector<
       std::pair<MachineBasicBlock::iterator, MachineBasicBlock::iterator>, 32>
       Regions;
 
-protected:
   // Path to opt-sched config options directory.
   SmallString<128> PathCfg;
 
@@ -156,7 +157,10 @@ protected:
 
   // The heuristic used for the enumerator.
   SchedPriorities EnumPriorities;
-  
+
+  // The heuristic used for the second pass enumerator in the two-pass scheduling approach.
+  SchedPriorities SecondPassEnumPriorities;
+
   // The heuristic used for the second pass enumerator in the two-pass scheduling approach.
   SchedPriorities SecondPassEnumPriorities;
 
@@ -233,7 +237,7 @@ public:
   void schedule() override;
 
   // Setup and select schedulers for the two pass scheduling approach.
-  void initSchedulers();
+  virtual void initSchedulers();
 
   // Execute a scheduling pass on the function.
   void runSchedPass(SchedPassStrategy S);
@@ -242,7 +246,7 @@ public:
   void scheduleOptSchedMinRP();
 
   // Run OptSched in ILP/RP balanced mode.
-  void scheduleOptSchedBalanced();
+  virtual void scheduleOptSchedBalanced();
 
   // Print info for all LLVM registers that are used or defined in the region.
   void dumpLLVMRegisters() const;
