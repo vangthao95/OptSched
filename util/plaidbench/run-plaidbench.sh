@@ -1,7 +1,8 @@
 #!/bin/bash
 #**************************************************************************************
-#Description:	Run all plaidbench benchmarks and redirect output to a log file.
-#Author:	Austin Kerbow
+#Description:	Run all plaidbench benchmarks and redirect output to a directory 
+#               that will contain the log file for each benchmark.
+#Author:	    Austin Kerbow
 #Modified By:	Vang Thao
 #Last Update:	November 27, 2019
 #**************************************************************************************
@@ -12,6 +13,8 @@ declare -a Networks=("densenet121" "densenet169" "densenet201" "inception_resnet
 Examples=4096
 BatchSize=16
 Command="plaidbench --examples $Examples --batch-size $BatchSize --results "
+# Note: The run number at the end such as "01" should be kept. This number is used
+# in other scripts. 
 DirectoryName="plaidbench-optsched-01"
 Keras="keras --no-fp16 --no-train"
 
