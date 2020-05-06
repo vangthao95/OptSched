@@ -4,7 +4,7 @@ Description:  Defines a generic linked list template class with a number of
               Warning: the code within has evolved over many years.
 Author:       Ghassan Shobaki
 Created:      Oct. 1997
-Last Update:  Mar. 2011
+Last Update:  Apr. 2020
 *******************************************************************************/
 
 #ifndef OPTSCHED_GENERIC_LNKD_LST_H
@@ -73,7 +73,7 @@ public:
   // Appends a new element to the end of the list.
   virtual void InsrtElmnt(T *elmnt);
   // Removes the provided element. The list must be dynamically sized.
-  virtual void RmvElmnt(T const *const elmnt);
+  virtual void RmvElmnt(const T *const elmnt);
   // Removes the last element of the list. The list must be dynamically sized.
   virtual void RmvLastElmnt();
 
@@ -103,10 +103,10 @@ public:
   virtual void RmvCrntElmnt();
 
   // Searches for an element in the list. Returns true if it is found.
-  virtual bool FindElmnt(T const *const element) const;
+  virtual bool FindElmnt(const T *const element) const;
   // Searches for an element in the list and records the number of times it.
   // is found in hitCnt. Returns true if the element is found at least once.
-  virtual bool FindElmnt(T const *const element, int &hitCnt) const;
+  virtual bool FindElmnt(const T *const element, int &hitCnt) const;
 
 protected:
   int maxSize_;
@@ -177,7 +177,9 @@ public:
   T *GetNxtPriorityElmnt();
   T *GetNxtPriorityElmnt(K &key);
   // Copies all the data from another list. The existing list must be empty.
-  void CopyList(PriorityList<T, K> const *const otherLst);
+  // Also insert the entries into an array if it one is passed.
+  void CopyList(PriorityList<T, K> const *const otherLst,
+                KeyedEntry<T, unsigned long> **keyedEntries_ = nullptr);
 
 protected:
   KeyedEntry<T, K> *allocKeyEntries_;
@@ -236,7 +238,7 @@ template <class T> void LinkedList<T>::InsrtElmnt(T *elmnt) {
   AppendEntry_(newEntry);
 }
 
-template <class T> void LinkedList<T>::RmvElmnt(T const *const elmnt) {
+template <class T> void LinkedList<T>::RmvElmnt(const T *const elmnt) {
   assert(LinkedList<T>::maxSize_ == INVALID_VALUE);
 
   Entry<T> *crntEntry, *prevEntry = NULL;
@@ -344,7 +346,7 @@ template <class T> inline void LinkedList<T>::ResetIterator() {
 }
 
 template <class T>
-bool LinkedList<T>::FindElmnt(T const *const element, int &hitCnt) const {
+bool LinkedList<T>::FindElmnt(const T *const element, int &hitCnt) const {
   Entry<T> *crntEntry;
   hitCnt = 0;
   for (crntEntry = topEntry_; crntEntry != NULL;
@@ -356,7 +358,7 @@ bool LinkedList<T>::FindElmnt(T const *const element, int &hitCnt) const {
   return hitCnt > 0 ? true : false;
 }
 
-template <class T> bool LinkedList<T>::FindElmnt(T const *const element) const {
+template <class T> bool LinkedList<T>::FindElmnt(const T *const element) const {
   int hitCnt;
   return FindElmnt(element, hitCnt);
 }
@@ -435,8 +437,6 @@ template <class T> Entry<T> *LinkedList<T>::AllocEntry_(T *element) {
 
   if (maxSize_ == INVALID_VALUE) {
     entry = new Entry<T>();
-    if (entry == NULL)
-      Logger::Fatal("Out of memory.");
   } else {
     assert(crntAllocIndx_ < maxSize_);
     entry = allocEntries_ + crntAllocIndx_;
@@ -450,8 +450,6 @@ template <class T> Entry<T> *LinkedList<T>::AllocEntry_(T *element) {
 template <class T> void LinkedList<T>::AllocEntries_() {
   assert(maxSize_ != INVALID_VALUE);
   allocEntries_ = new Entry<T>[maxSize_];
-  if (allocEntries_ == NULL)
-    Logger::Fatal("Out of memory.");
   crntAllocIndx_ = 0;
 }
 
@@ -617,7 +615,9 @@ void PriorityList<T, K>::BoostEntry(KeyedEntry<T, K> *entry, K newKey) {
 }
 
 template <class T, class K>
-void PriorityList<T, K>::CopyList(PriorityList<T, K> const *const otherLst) {
+void PriorityList<T, K>::CopyList(
+    PriorityList<T, K> const *const otherLst,
+    KeyedEntry<T, unsigned long> **keyedEntries_) {
   assert(LinkedList<T>::elmntCnt_ == 0);
 
   for (KeyedEntry<T, K> *entry = (KeyedEntry<T, K> *)otherLst->topEntry_;
@@ -626,6 +626,8 @@ void PriorityList<T, K>::CopyList(PriorityList<T, K> const *const otherLst) {
     K key = entry->key;
     KeyedEntry<T, K> *newEntry = AllocEntry_(elmnt, key);
     LinkedList<T>::AppendEntry_(newEntry);
+    if (keyedEntries_)
+      keyedEntries_[entry->element->GetNum()] = newEntry;
 
     if (entry == otherLst->rtrvEntry_) {
       LinkedList<T>::rtrvEntry_ = newEntry;
@@ -641,8 +643,6 @@ KeyedEntry<T, K> *PriorityList<T, K>::AllocEntry_(T *element, K key) {
 
   if (LinkedList<T>::maxSize_ == INVALID_VALUE) {
     newEntry = new KeyedEntry<T, K>(element, key);
-    if (newEntry == NULL)
-      Logger::Fatal("Out of memory.");
   } else {
     assert(LinkedList<T>::crntAllocIndx_ < LinkedList<T>::maxSize_);
     newEntry = allocKeyEntries_ + LinkedList<T>::crntAllocIndx_;
@@ -656,8 +656,6 @@ KeyedEntry<T, K> *PriorityList<T, K>::AllocEntry_(T *element, K key) {
 
 template <class T, class K> void PriorityList<T, K>::AllocEntries_() {
   allocKeyEntries_ = new KeyedEntry<T, K>[LinkedList<T>::maxSize_];
-  if (allocKeyEntries_ == NULL)
-    Logger::Fatal("Out of memory.");
   LinkedList<T>::crntAllocIndx_ = 0;
 }
 
