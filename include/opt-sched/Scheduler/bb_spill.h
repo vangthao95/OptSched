@@ -41,6 +41,8 @@ private:
 
   MapVector<int, int> InstructionsScheduledInEachCluster;
 
+  int StartCycle;
+
   /// The minimum amount of cluster blocks possible.
   int MinClusterBlocks;
 
@@ -68,15 +70,18 @@ private:
 
     /// Instruction number that ended this cluster. Used to check if we should
     /// restore the cluster state when backtracking.
-    int InstNum; 
+    int InstNum;
+
+    int StartCycle;
 
     /// Contains the actual names of the instructions in the cluster. Only used
     /// for printing and debugging purposes.
     std::unique_ptr<llvm::SmallVector<llvm::StringRef, 4>> InstrList;
 
     /// Constructor for this struct
-    PastClusters(int Cluster, int Size, int Instructions)
-        : ClusterGroup(Cluster), ClusterSize(Size), InstNum(Instructions) {}
+    PastClusters(int Cluster, int Size, int Instructions, int Cycle)
+        : ClusterGroup(Cluster), ClusterSize(Size), InstNum(Instructions),
+            StartCycle(Cycle) {}
   };
 
   /// Vector containing the (n-1) past clusters
@@ -161,7 +166,7 @@ private:
   void InitForCostCmputtn_();
   InstCount CmputDynmcCost_();
 
-  void UpdateSpillInfoForSchdul_(SchedInstruction *inst, bool trackCnflcts);
+  void UpdateSpillInfoForSchdul_(SchedInstruction *inst, bool trackCnflcts, int Cycle);
   void UpdateSpillInfoForUnSchdul_(SchedInstruction *inst);
   void SetupPhysRegs_();
   void CmputCrntSpillCost_();

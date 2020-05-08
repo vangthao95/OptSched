@@ -459,7 +459,7 @@ void BBWithSpill::CmputCrntSpillCost_() {
 /*****************************************************************************/
 
 void BBWithSpill::UpdateSpillInfoForSchdul_(SchedInstruction *inst,
-                                            bool trackCnflcts) {
+                                            bool trackCnflcts, int Cycle) {
   int16_t regType;
   int defCnt, useCnt, regNum, physRegNum;
   Register **defs, **uses;
@@ -502,11 +502,11 @@ void BBWithSpill::UpdateSpillInfoForSchdul_(SchedInstruction *inst,
             // Last cluster that we just exited out of, used for fast accessing
             // to its contents
             LastCluster = llvm::make_unique<PastClusters>(
-                ActiveClusterGroup, CurrentClusterSize, inst->GetNum());
+                ActiveClusterGroup, CurrentClusterSize, inst->GetNum(), StartCycle);
           } else
             // This is the first cluster block that we exited out of.
             LastCluster = llvm::make_unique<PastClusters>(
-                ActiveClusterGroup, CurrentClusterSize, inst->GetNum());
+                ActiveClusterGroup, CurrentClusterSize, inst->GetNum(), StartCycle);
 
           LastCluster->InstrList = std::move(InstrList);
 
@@ -537,6 +537,7 @@ void BBWithSpill::UpdateSpillInfoForSchdul_(SchedInstruction *inst,
         InstructionsScheduledInEachCluster[ActiveClusterGroup]++;
 	      InstrList = llvm::make_unique<llvm::SmallVector<llvm::StringRef, 4>>();
 	      InstrList->push_back(inst->GetName());
+        StartCycle = Cycle;
       }
     } else if (CurrentClusterSize > 0) {
       // Case 4: Exiting out of an active cluster
@@ -549,11 +550,11 @@ void BBWithSpill::UpdateSpillInfoForSchdul_(SchedInstruction *inst,
         // Last cluster that we just exited out of, used for fast accessing
         // to its contents.
         LastCluster = llvm::make_unique<PastClusters>(
-            ActiveClusterGroup, CurrentClusterSize, inst->GetNum());
+            ActiveClusterGroup, CurrentClusterSize, inst->GetNum(), StartCycle);
       } else
         // This is the first cluster block that we exited out of.
         LastCluster = llvm::make_unique<PastClusters>(
-            ActiveClusterGroup, CurrentClusterSize, inst->GetNum());
+            ActiveClusterGroup, CurrentClusterSize, inst->GetNum(), StartCycle);
 
       LastCluster->InstrList = std::move(InstrList);
 
@@ -798,6 +799,7 @@ void BBWithSpill::UpdateSpillInfoForUnSchdul_(SchedInstruction *inst) {
           if (LastCluster->InstNum == inst->GetNum()) {
             CurrentClusterSize = LastCluster->ClusterSize;
             ActiveClusterGroup = LastCluster->ClusterGroup;
+            StartCycle = LastCluster->StartCycle;
             inst->SetActiveCluster(ActiveClusterGroup);
 
 	          InstrList = std::move(LastCluster->InstrList);
@@ -830,6 +832,7 @@ void BBWithSpill::UpdateSpillInfoForUnSchdul_(SchedInstruction *inst) {
         // ended the cluster then restore the previous cluster's state
         CurrentClusterSize = LastCluster->ClusterSize;
         ActiveClusterGroup = LastCluster->ClusterGroup;
+        StartCycle = LastCluster->StartCycle;
         inst->SetActiveCluster(ActiveClusterGroup);
 
 	      InstrList = std::move(LastCluster->InstrList);
@@ -963,7 +966,7 @@ void BBWithSpill::SchdulInst(SchedInstruction *inst, InstCount cycleNum,
   if (inst == NULL)
     return;
   assert(inst != NULL);
-  UpdateSpillInfoForSchdul_(inst, trackCnflcts);
+  UpdateSpillInfoForSchdul_(inst, trackCnflcts, crntCycleNum_);
 }
 /*****************************************************************************/
 
@@ -1120,37 +1123,7 @@ InstCount BBWithSpill::UpdtOptmlSched(InstSchedule *crntSched,
     SetBestSchedLength(crntSched->GetCrntLngth());
     enumBestSched_->Copy(crntSched);
     bestSched_ = enumBestSched_;
-
-    // Print the instructions in the clusters after finding a schedule.
-    if (IsSecondPass() && ClusterMemoryOperations) {
-      dbgs() << "Printing clustered instructions:\n";
-      int i = 1;
-      for (const auto &clusters : PastClustersList) {
-        dbgs() << "Printing cluster " << i << ": ";
-        for (const auto &instr : *clusters->InstrList) {
-          dbgs() << instr << " ";
-        }
-        i++;
-      dbgs() << '\n';
-      }
-
-      if (LastCluster) {
-        dbgs() << "Printing cluster " << i << ": ";
-        for (const auto &instr : *(LastCluster->InstrList)) {
-          dbgs() << instr << " ";
-        }
-        i++;
-      dbgs() << '\n';
-      }
-
-      if (InstrList && InstrList->size() > 0) {
-        dbgs() << "Printing cluster " << i << ": ";
-        for (const auto &instr : *InstrList) {
-          dbgs() << instr << " ";
-        }
-      dbgs() << '\n';
-      }
-    }
+    printCurrentClustering();
   }
 
   return GetBestCost();
@@ -1195,6 +1168,11 @@ bool BBWithSpill::ChkCostFsblty(InstCount trgtLngth, EnumTreeNode *node) {
 
   // assert(cost >= 0);
   assert(dynmcCostLwrBound >= 0);
+
+  if (IsSecondPass() && ClusterMemoryOperations) {
+    dbgs() << "Current cycle: " << node->GetTime() <<", current cost is: " << dynmcCostLwrBound << ". Current best is: " << GetBestCost() << '\n';
+    printCurrentClustering();
+  }
 
   fsbl = dynmcCostLwrBound < GetBestCost();
 
@@ -1338,4 +1316,37 @@ void BBWithSpill::CmputCnflcts_(InstSchedule *sched) {
     cnflctCnt += regFiles_[i].GetConflictCnt();
   }
   sched->SetConflictCount(cnflctCnt);
+}
+
+void BBWithSpill::printCurrentClustering() {
+  // Print the instructions in the clusters after finding a schedule.
+  if (IsSecondPass() && ClusterMemoryOperations) {
+    dbgs() << "Printing clustered instructions:\n";
+    int i = 1;
+    for (const auto &clusters : PastClustersList) {
+      dbgs() << "Printing cluster " << i << ", start cycle (" << clusters->StartCycle << "): ";
+      for (const auto &instr : *clusters->InstrList) {
+        dbgs() << instr << " ";
+      }
+      i++;
+    dbgs() << '\n';
+    }
+
+    if (LastCluster) {
+      dbgs() << "Printing cluster " << i << ", start cycle (" << LastCluster->StartCycle << "): ";
+      for (const auto &instr : *(LastCluster->InstrList)) {
+        dbgs() << instr << " ";
+      }
+      i++;
+    dbgs() << '\n';
+    }
+
+    if (InstrList && InstrList->size() > 0) {
+      dbgs() << "Printing cluster " << i << ", start cycle (" << StartCycle << "): ";
+      for (const auto &instr : *InstrList) {
+        dbgs() << instr << " ";
+      }
+    dbgs() << '\n';
+    }
+  }
 }
