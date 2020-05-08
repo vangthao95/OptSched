@@ -186,7 +186,6 @@ unsigned long ReadyList::CmputKey_(SchedInstruction *inst, bool isUpdate,
       newLastUseCnt = inst->CmputLastUseCnt();
       if (newLastUseCnt != oldLastUseCnt)
         changed = true;
-      }
 
       AddPrirtyToKey_(key, keySize, useCntBits_, newLastUseCnt, maxUseCnt_);
       break;
