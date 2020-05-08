@@ -1050,7 +1050,7 @@ FUNC_RESULT BBWithSpill::Enumerate_(Milliseconds startTime,
       timeout = true;
     HandlEnumrtrRslt_(rslt, trgtLngth);
 
-    if (bestCost_ == 0 || rslt == RES_ERROR ||
+    if (GetBestCost() == 0 || rslt == RES_ERROR ||
         (lngthDeadline == rgnDeadline && rslt == RES_TIMEOUT)) { //||
         //(rslt == RES_SUCCESS && IsSecondPass())) {
 
@@ -1163,7 +1163,7 @@ bool BBWithSpill::ChkCostFsblty(InstCount trgtLngth, EnumTreeNode *node) {
   if (IsSecondPass() && ClusterMemoryOperations)
     crntCost += CurrentClusterBlocks * ClusteringWeight;
 
-  crntCost -= costLwrBound_;
+  crntCost -= GetCostLwrBound();
   dynmcCostLwrBound = crntCost;
 
   // assert(cost >= 0);

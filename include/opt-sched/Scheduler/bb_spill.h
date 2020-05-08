@@ -43,6 +43,8 @@ private:
 
   int StartCycle;
 
+  void printCurrentClustering();
+
   /// The minimum amount of cluster blocks possible.
   int MinClusterBlocks;
 
