@@ -70,9 +70,9 @@ static ScheduleDAGInstrs *createOptSched(MachineSchedContext *C) {
 }
 
 // Register the machine scheduler.
-static MachineSchedRegistry OptSchedMIRegistry("optsched",
-                                               "Use the OptSched scheduler.",
-                                               createOptSched);
+static OptSchedRegistry OptSchedMIRegistry("optsched",
+                                           "Use the OptSched scheduler.",
+                                           createOptSched);
 
 // Command line options for opt-sched.
 static cl::opt<std::string> OptSchedCfg(
