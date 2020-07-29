@@ -2,15 +2,17 @@
 '''
 **********************************************************************************
 Description:    This script is meant to be used with the OptSched scheduler and
-                the run-plaidbench.sh script. This script will extract stats
-                about how our OptSched scheduler is doing from the log files
-                generated from the run-plaidbench.sh script.
-Author:         Vang Thao
-Last Update:    December 30, 2019
+                the run-plaidbench.sh script or with test results from shoc.
+                This script will extract stats about how our OptSched scheduler
+                is doing from the log files generated from the run-plaidbench.sh
+                script.
+Author:	        Vang Thao
+Last Update:	April 13, 2019
 **********************************************************************************
 
 OUTPUT:
-    This script takes in data from plaidbench runs and output a single spreadsheet.
+    This script takes in data from plaidbench or shoc runs and output a single 
+    spreadsheet.
         Spreadsheet 1: optsched-stats.xlsx
 
 Requirements:
@@ -34,52 +36,37 @@ Example:
         ...
 '''
 
-import os       # Used for scanning directories, getting paths, and checking files.
-import re
+import argparse
+import os
+import logging
+import sys
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.styles import Alignment
-import argparse
-
-REGEX_DAG_INFO = re.compile(r'Processing DAG (.*) with (\d+) insts and max latency (\d+)')
-REGEX_LIST_OPTIMAL = re.compile(r'list schedule (.?)* is optimal')
-REGEX_COST_IMPROV = re.compile(r'cost imp=(\d+).')
-REGEX_OPTIMAL = re.compile(r'The schedule is optimal')
-REGEX_PASS_NUM = re.compile(r'End of (.*) pass through')
+# Import common functionalities
+from OptSched import RE_PASS_NUM, RE_DAG_INFO, RE_COST_IMPROV, RE_OPTIMAL, RE_REVERT_SCHED, plaidbench, shoc_benchmarks, regionSpliter
 
 # Contains all of the stats
 benchStats = {}
 passStats = {}
 passes = ['first', 'second', 'third']
 
-# List of benchmark names
-benchmarks = [
-    'densenet121',
-    'densenet169',
-    'densenet201',
-    'inception_resnet_v2',
-    'inception_v3',
-    'mobilenet',
-    'nasnet_large',
-    'nasnet_mobile',
-    'resnet50',
-    'vgg16',
-    'vgg19',
-    'xception',
-    'imdb_lstm',
-]
-
 # List of stats that can be initialized to 0
 statsProcessed = [
     'TotalProcessed',
+    'SchedRevert',
     'EnumCnt',
     'OptImpr',
     'OptNotImpr',
     'TimeoutImpr',
     'TimeoutNotImpr',
     'TimeoutCnt',
-    'TotalInstr'
+    'TotalInstr',
+    'TimeoutInstrToEnum',
 ]
+
+benchmarks = []
+
 
 def initializePassStats(dictToInitialize):
     for stat in statsProcessed:
@@ -88,7 +75,19 @@ def initializePassStats(dictToInitialize):
     dictToInitialize['LargestOptimalRegion'] = -1
     dictToInitialize['LargestImprovedRegion'] = -1
 
-def parseStats(inputFolder):
+
+def setBenchmarks(isShoc):
+    global benchmarks
+    if isShoc:
+        benchmarks = shoc_benchmarks
+    else:
+        benchmarks = plaidbench
+
+
+def parseStats(inputFolder, isShoc):
+    # Get logger
+    logger = logging.getLogger('parseStats')
+
     # Initialize pass stats collection variables
     for x in passes:
         passStats[x] = {}
@@ -97,11 +96,20 @@ def parseStats(inputFolder):
     # Begin stats collection for this run
     for bench in benchmarks:
         # Get the path to the log file
-        currentPath = os.path.join(inputFolder, bench)
-        currentLogFile = os.path.join(currentPath, bench + '.log')
+        if isShoc:
+            currentPath = os.path.join(inputFolder, 'Logs')
+            currentLogFile = os.path.join(
+                currentPath, 'dev0_{}.err'.format(bench))
+        else:
+            currentPath = os.path.join(inputFolder, bench)
+            currentLogFile = os.path.join(currentPath, bench + '.log')
+
+        logger.debug('Verifying file {} exists'.format(currentLogFile))
 
         # First check if log file exists.
         if os.path.exists(currentLogFile):
+            logger.debug(
+                'File found! Processing file {}'.format(currentLogFile))
             benchStats[bench] = {}
             # Open log file if it exists.
             with open(currentLogFile) as file:
@@ -112,11 +120,11 @@ def parseStats(inputFolder):
                     initializePassStats(stats[x])
 
                 log = file.read()
-                blocks = log.split('********** Opt Scheduling **********')[1:]
+                blocks = log.split(regionSpliter)[1:]
                 for block in blocks:
                     # Get pass num, if none is found then
                     # use third as default.
-                    getPass = REGEX_PASS_NUM.search(block)
+                    getPass = RE_PASS_NUM.search(block)
                     if getPass:
                         passNum = getPass.group(1)
                     else:
@@ -124,29 +132,35 @@ def parseStats(inputFolder):
 
                     stats[passNum]['TotalProcessed'] += 1
 
+                    if RE_REVERT_SCHED.search(block):
+                        stats[passNum]['SchedRevert'] += 1
+                        continue
+
+                    dagName = ''
                     # If our enumerator was called then
                     # record stats for it.
                     if 'Enumerating' in block:
                         stats[passNum]['EnumCnt'] += 1
                         # Get cost
-                        searchCost = REGEX_COST_IMPROV.search(block)
+                        searchCost = RE_COST_IMPROV.search(block)
                         cost = int(searchCost.group(1))
 
                         # Get DAG stats
-                        dagInfo = REGEX_DAG_INFO.search(block)
+                        dagInfo = RE_DAG_INFO.search(block)
+                        dagName = dagInfo.group(1)
                         numOfInstr = int(dagInfo.group(2))
                         stats[passNum]['TotalInstr'] += numOfInstr
 
-                        if REGEX_OPTIMAL.search(block):
+                        if RE_OPTIMAL.search(block):
                             # Optimal and improved
                             if cost > 0:
                                 stats[passNum]['OptImpr'] += 1
-                                if (numOfInstr > stats[passNum]['LargestImprovedRegion']):
+                                if numOfInstr > stats[passNum]['LargestImprovedRegion']:
                                     stats[passNum]['LargestImprovedRegion'] = numOfInstr
                             # Optimal but not improved
                             elif cost == 0:
                                 stats[passNum]['OptNotImpr'] += 1
-                            if (numOfInstr > stats[passNum]['LargestOptimalRegion']):
+                            if numOfInstr > stats[passNum]['LargestOptimalRegion']:
                                 stats[passNum]['LargestOptimalRegion'] = numOfInstr
                         elif 'timedout' in block:
                             # Timeout and improved
@@ -158,19 +172,25 @@ def parseStats(inputFolder):
                             elif cost == 0:
                                 stats[passNum]['TimeoutNotImpr'] += 1
                             stats[passNum]['TimeoutCnt'] += 1
-
+                            stats[passNum]['TimeoutInstrToEnum'] += numOfInstr
 
         # If the file doesn't exist, output error log.
         else:
             print('Cannot find log file for benchmark {}.'.format(bench))
-
+        # FIXME: Will crash if no benchmark is found
         for passNum in passes:
             for stat in statsProcessed:
+                # Accumulate stats for each pass from each benchmark into one single stat dictionary
                 passStats[passNum][stat] += stats[passNum][stat]
+            # Calculate average size to enumerator for each benchmark
             if stats[passNum]['EnumCnt'] != 0:
-                stats[passNum]['AverageSizeToEnum'] = float(stats[passNum]['TotalInstr'])/stats[passNum]['EnumCnt']
+                stats[passNum]['AverageSizeToEnum'] = stats[passNum]['TotalInstr'] / \
+                    stats[passNum]['EnumCnt']
+
+            # Find largest optimal region for each pass
             if passStats[passNum]['LargestOptimalRegion'] < stats[passNum]['LargestOptimalRegion']:
                 passStats[passNum]['LargestOptimalRegion'] = stats[passNum]['LargestOptimalRegion']
+            # Find largest improved region for each pass
             if passStats[passNum]['LargestImprovedRegion'] < stats[passNum]['LargestImprovedRegion']:
                 passStats[passNum]['LargestImprovedRegion'] = stats[passNum]['LargestImprovedRegion']
 
@@ -178,7 +198,12 @@ def parseStats(inputFolder):
 
     for passNum in passes:
         if passStats[passNum]['EnumCnt'] != 0:
-            passStats[passNum]['AverageSizeToEnum'] = float(passStats[passNum]['TotalInstr'])/passStats[passNum]['EnumCnt']
+            passStats[passNum]['AverageSizeToEnum'] = passStats[passNum]['TotalInstr'] / \
+                passStats[passNum]['EnumCnt']
+        if passStats[passNum]['TimeoutCnt'] > 0:
+            passStats[passNum]['TimeoutAverageInstrSizeToEnum'] = passStats[passNum]['TimeoutInstrToEnum'] / \
+                passStats[passNum]['TimeoutCnt']
+
 
 def printStats():
     for passNum in passes:
@@ -196,12 +221,14 @@ def printStats():
         for stat in passStats[passNum]:
             print('    {} : {}'.format(stat, passStats[passNum][stat]))
 
+
 def writeBenchmarkNames(ws, row):
     for bench in benchmarks:
         ws['A' + str(row)] = bench
         row += 1
     ws['A' + str(row)] = 'Overall'
     ws['A' + str(row)].font = Font(bold=True)
+
 
 def createSpreadsheets(output):
     if 'xls' not in output[-4:]:
@@ -221,14 +248,15 @@ def createSpreadsheets(output):
     ws[col + str(row)] = 'Benchmark Stats'
     row = 2
     ws[col+str(row)] = 'Regions processed'
-    ws[chr(ord(col)+1)+str(row)] = 'Passed to B&B'
-    ws[chr(ord(col)+2)+str(row)] = 'Optimal and improved'
-    ws[chr(ord(col)+3)+str(row)] = 'Optimal and not improved'
-    ws[chr(ord(col)+4)+str(row)] = 'Timed out and improved'
-    ws[chr(ord(col)+5)+str(row)] = 'Timed out and not improved'
-    ws[chr(ord(col)+6)+str(row)] = 'Avg. Region size passed to B&B'
-    ws[chr(ord(col)+7)+str(row)] = 'Largest optimal region'
-    ws[chr(ord(col)+8)+str(row)] = 'Largest improved region'
+    ws[chr(ord(col)+1)+str(row)] = 'Sched. Reverted'
+    ws[chr(ord(col)+2)+str(row)] = 'Passed to B&B'
+    ws[chr(ord(col)+3)+str(row)] = 'Optimal and improved'
+    ws[chr(ord(col)+4)+str(row)] = 'Optimal and not improved'
+    ws[chr(ord(col)+5)+str(row)] = 'Timed out and improved'
+    ws[chr(ord(col)+6)+str(row)] = 'Timed out and not improved'
+    ws[chr(ord(col)+7)+str(row)] = 'Avg. Region size passed to B&B'
+    ws[chr(ord(col)+8)+str(row)] = 'Largest optimal region'
+    ws[chr(ord(col)+9)+str(row)] = 'Largest improved region'
 
     # Stats entry
     row = 3
@@ -249,88 +277,158 @@ def createSpreadsheets(output):
         for bench in benchmarks:
             ws[col+str(row)] = benchStats[bench][passNum]['TotalProcessed']
             ws[col+str(row)].alignment = Alignment(horizontal='right')
+
+            ws[chr(ord(col)+1)+str(row)
+               ] = benchStats[bench][passNum]['SchedRevert']
+
             if benchStats[bench][passNum]['EnumCnt'] != 0:
-                enumCntPcnt = float(benchStats[bench][passNum]['EnumCnt']) / benchStats[bench][passNum]['TotalProcessed'] * 100.0
-                ws[chr(ord(col)+1)+str(row)] = str(benchStats[bench][passNum]['EnumCnt']) + ' ({:.2f}%)'.format(enumCntPcnt)
-                ws[chr(ord(col)+1)+str(row)].alignment = Alignment(horizontal='right')
+                # Calculate the enumerated count percentage
+                enumCntPcnt = benchStats[bench][passNum]['EnumCnt'] / \
+                    benchStats[bench][passNum]['TotalProcessed'] * 100.0
+                ws[chr(ord(col)+2)+str(row)] = '{} ({:.2f}%)'.format(
+                    benchStats[bench][passNum]['EnumCnt'], enumCntPcnt)
+                ws[chr(ord(col)+2)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
-                enumCntPcnt = float(benchStats[bench][passNum]['OptImpr']) / benchStats[bench][passNum]['EnumCnt'] * 100.0
-                ws[chr(ord(col)+2)+str(row)] = str(benchStats[bench][passNum]['OptImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
-                ws[chr(ord(col)+2)+str(row)].alignment = Alignment(horizontal='right')
+                # Calculate the amount that is optimal and improved
+                enumCntPcnt = benchStats[bench][passNum]['OptImpr'] / \
+                    benchStats[bench][passNum]['EnumCnt'] * 100.0
+                ws[chr(ord(col)+3)+str(row)] = '{} ({:.2f}%)'.format(
+                    benchStats[bench][passNum]['OptImpr'], enumCntPcnt)
+                ws[chr(ord(col)+3)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
-                enumCntPcnt = float(benchStats[bench][passNum]['OptNotImpr']) / benchStats[bench][passNum]['EnumCnt'] * 100.0
-                ws[chr(ord(col)+3)+str(row)] = str(benchStats[bench][passNum]['OptNotImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
-                ws[chr(ord(col)+3)+str(row)].alignment = Alignment(horizontal='right')
+                # Calculate the amount that is optimal and not improved
+                enumCntPcnt = benchStats[bench][passNum]['OptNotImpr'] / \
+                    benchStats[bench][passNum]['EnumCnt'] * 100.0
+                ws[chr(ord(col)+4)+str(row)] = '{} ({:.2f}%)'.format(benchStats[bench]
+                                                                     [passNum]['OptNotImpr'], enumCntPcnt)
+                ws[chr(ord(col)+4)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
-                enumCntPcnt = float(benchStats[bench][passNum]['TimeoutImpr']) / benchStats[bench][passNum]['EnumCnt'] * 100.0
-                ws[chr(ord(col)+4)+str(row)] = str(benchStats[bench][passNum]['TimeoutImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
-                ws[chr(ord(col)+4)+str(row)].alignment = Alignment(horizontal='right')
+                # Calculate the amount that timed out and improved
+                enumCntPcnt = benchStats[bench][passNum]['TimeoutImpr'] / \
+                    benchStats[bench][passNum]['EnumCnt'] * 100.0
+                ws[chr(ord(col)+5)+str(row)] = '{} ({:.2f}%)'.format(benchStats[bench]
+                                                                     [passNum]['TimeoutImpr'], enumCntPcnt)
+                ws[chr(ord(col)+5)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
-                enumCntPcnt = float(benchStats[bench][passNum]['TimeoutNotImpr']) / benchStats[bench][passNum]['EnumCnt'] * 100.0
-                ws[chr(ord(col)+5)+str(row)] = str(benchStats[bench][passNum]['TimeoutNotImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
-                ws[chr(ord(col)+5)+str(row)].alignment = Alignment(horizontal='right')
+                # Calculate the amount that timed out and not improved
+                enumCntPcnt = benchStats[bench][passNum]['TimeoutNotImpr'] / \
+                    benchStats[bench][passNum]['EnumCnt'] * 100.0
+                ws[chr(ord(col)+6)+str(row)] = '{} ({:.2f}%)'.format(benchStats[bench]
+                                                                     [passNum]['TimeoutNotImpr'], enumCntPcnt)
+                ws[chr(ord(col)+6)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
-                ws[chr(ord(col)+6)+str(row)] = benchStats[bench][passNum]['AverageSizeToEnum']
-                ws[chr(ord(col)+6)+str(row)].alignment = Alignment(horizontal='right')
+                # Average size passed to the enumerator
+                ws[chr(ord(col)+7)+str(row)
+                   ] = benchStats[bench][passNum]['AverageSizeToEnum']
+                ws[chr(ord(col)+7)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
-                ws[chr(ord(col)+7)+str(row)] = benchStats[bench][passNum]['LargestOptimalRegion']
-                ws[chr(ord(col)+7)+str(row)].alignment = Alignment(horizontal='right')
+                # The largest optimal region found by the enumerator
+                ws[chr(ord(col)+8)+str(row)
+                   ] = benchStats[bench][passNum]['LargestOptimalRegion']
+                ws[chr(ord(col)+8)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
-                ws[chr(ord(col)+8)+str(row)] = benchStats[bench][passNum]['LargestImprovedRegion']
-                ws[chr(ord(col)+8)+str(row)].alignment = Alignment(horizontal='right')
+                # The largest improved region by the enumerator
+                ws[chr(ord(col)+9)+str(row)
+                   ] = benchStats[bench][passNum]['LargestImprovedRegion']
+                ws[chr(ord(col)+9)+str(row)
+                   ].alignment = Alignment(horizontal='right')
+
+            else:
+                ws[chr(ord(col)+2)+str(row)] = '0 (0.00%)'
+                ws[chr(ord(col)+2)+str(row)
+                   ].alignment = Alignment(horizontal='right')
 
             row += 1
 
         # Write overall stats
         ws[col+str(row)] = passStats[passNum]['TotalProcessed']
-        enumCntPcnt = float(passStats[passNum]['EnumCnt']) / passStats[passNum]['TotalProcessed'] * 100.0
-        ws[chr(ord(col)+1)+str(row)] = str(passStats[passNum]['EnumCnt']) + ' ({:.2f}%)'.format(enumCntPcnt)
-        ws[chr(ord(col)+1)+str(row)].alignment = Alignment(horizontal='right')
+        enumCntPcnt = float(
+            passStats[passNum]['EnumCnt']) / passStats[passNum]['TotalProcessed'] * 100.0
+
+        ws[chr(ord(col)+1)+str(row)] = passStats[passNum]['SchedRevert']
+
+        ws[chr(ord(col)+2)+str(row)] = str(passStats[passNum]
+                                           ['EnumCnt']) + ' ({:.2f}%)'.format(enumCntPcnt)
+        ws[chr(ord(col)+2)+str(row)].alignment = Alignment(horizontal='right')
 
         if passStats[passNum]['EnumCnt'] != 0:
-            enumCntPcnt = float(passStats[passNum]['OptImpr']) / passStats[passNum]['EnumCnt'] * 100.0
-            ws[chr(ord(col)+2)+str(row)] = str(passStats[passNum]['OptImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
-            ws[chr(ord(col)+2)+str(row)].alignment = Alignment(horizontal='right')
-
-            enumCntPcnt = float(passStats[passNum]['OptNotImpr']) / passStats[passNum]['EnumCnt'] * 100.0
-            ws[chr(ord(col)+3)+str(row)] = str(passStats[passNum]['OptNotImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
+            enumCntPcnt = passStats[passNum]['OptImpr'] / \
+                passStats[passNum]['EnumCnt'] * 100.0
+            ws[chr(ord(col)+3)+str(row)] = '{} ({:.2f}%)'.format(passStats[passNum]
+                                                                 ['OptImpr'], enumCntPcnt)
             ws[chr(ord(col)+3)+str(row)].alignment = Alignment(horizontal='right')
 
-            enumCntPcnt = float(passStats[passNum]['TimeoutImpr']) / passStats[passNum]['EnumCnt'] * 100.0
-            ws[chr(ord(col)+4)+str(row)] = str(passStats[passNum]['TimeoutImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
+            enumCntPcnt = passStats[passNum]['OptNotImpr'] / \
+                passStats[passNum]['EnumCnt'] * 100.0
+            ws[chr(ord(col)+4)+str(row)] = '{} ({:.2f}%)'.format(passStats[passNum]
+                                                                 ['OptNotImpr'], enumCntPcnt)
             ws[chr(ord(col)+4)+str(row)].alignment = Alignment(horizontal='right')
 
-            enumCntPcnt = float(passStats[passNum]['TimeoutNotImpr']) / passStats[passNum]['EnumCnt'] * 100.0
-            ws[chr(ord(col)+5)+str(row)] = str(passStats[passNum]['TimeoutNotImpr']) + ' ({:.2f}%)'.format(enumCntPcnt)
+            enumCntPcnt = passStats[passNum]['TimeoutImpr'] / \
+                passStats[passNum]['EnumCnt'] * 100.0
+            ws[chr(ord(col)+5)+str(row)] = '{} ({:.2f}%)'.format(passStats[passNum]
+                                                                 ['TimeoutImpr'], enumCntPcnt)
             ws[chr(ord(col)+5)+str(row)].alignment = Alignment(horizontal='right')
 
-            ws[chr(ord(col)+6)+str(row)] = passStats[passNum]['AverageSizeToEnum']
+            enumCntPcnt = passStats[passNum]['TimeoutNotImpr'] / \
+                passStats[passNum]['EnumCnt'] * 100.0
+            ws[chr(ord(col)+6)+str(row)] = '{} ({:.2f}%)'.format(passStats[passNum]
+                                                                 ['TimeoutNotImpr'], enumCntPcnt)
             ws[chr(ord(col)+6)+str(row)].alignment = Alignment(horizontal='right')
 
-            ws[chr(ord(col)+7)+str(row)] = passStats[passNum]['LargestOptimalRegion']
+            ws[chr(ord(col)+7)+str(row)] = passStats[passNum]['AverageSizeToEnum']
             ws[chr(ord(col)+7)+str(row)].alignment = Alignment(horizontal='right')
 
-            ws[chr(ord(col)+8)+str(row)] = passStats[passNum]['LargestImprovedRegion']
+            ws[chr(ord(col)+8)+str(row)
+               ] = passStats[passNum]['LargestOptimalRegion']
             ws[chr(ord(col)+8)+str(row)].alignment = Alignment(horizontal='right')
+
+            ws[chr(ord(col)+9)+str(row)
+               ] = passStats[passNum]['LargestImprovedRegion']
+            ws[chr(ord(col)+9)+str(row)].alignment = Alignment(horizontal='right')
 
         # Prepare to write for next pass if there is any.
         row += 3
 
     wb.save(output)
 
+
 def main(args):
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+
+    setBenchmarks(args.shoc)
+
     # Start stats collection
-    parseStats(args.inputFolder)
+    parseStats(args.inputFolder, args.shoc)
 
     if args.verbose:
         printStats()
 
     if not args.disable:
-        createSpreadsheets(args.output)
+        filename = ''
+        if args.output is None:
+            filename = os.path.dirname('optsched-stats-' + args.inputFolder)
+        else:
+            filename = args.output
+
+        createSpreadsheets(filename)
+
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Script to extract OptSched stats', \
-                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description='Script to extract OptSched stats',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument(
+        dest='inputFolder',
+        help='The path to a benchmark directory')
 
     parser.add_argument('--verbose', '-v',
                         action='store_true', default=False,
@@ -338,7 +436,6 @@ if __name__ == '__main__':
                         help='Print the stats to terminal')
 
     parser.add_argument('--output', '-o',
-                        default='optsched-stats',
                         dest='output',
                         help='Output spreadsheet filepath')
 
@@ -347,10 +444,10 @@ if __name__ == '__main__':
                         dest='disable',
                         help='Disable spreadsheet output.')
 
-    parser.add_argument('--input', '-i',
-                        default='.',
-                        dest='inputFolder',
-                        help='The path to scan for benchmark directories')
+    parser.add_argument('--shoc',
+                        action='store_true', default=False,
+                        dest='shoc',
+                        help='Parse for shoc benchmarks')
 
     args = parser.parse_args()
 

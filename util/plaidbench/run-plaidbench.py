@@ -3,13 +3,13 @@ import subprocess
 import argparse
 import os
 
-#**************************************************************************************
-#Description:	Run all plaidbench benchmarks and redirect output to a directory
+# **************************************************************************************
+# Description:	Run all plaidbench benchmarks and redirect output to a directory
 #               that will contain the log file for each benchmark.
-#Author:	    Austin Kerbow
-#Modified By:	Justin Bassett
-#Last Update:	May 4, 2020
-#**************************************************************************************
+# Author:	    Austin Kerbow
+# Modified By:	Justin Bassett
+# Last Update:	May 4, 2020
+# **************************************************************************************
 # Requires write permission in the current directory.
 #
 # OUTPUT:
@@ -35,9 +35,12 @@ NETWORKS = (
 EXAMPLES = 4096
 BATCH_SIZE = 16
 
-parser = argparse.ArgumentParser(description='Run all plaidbench benchmarks, redirecting output to a directory which contains the log file for each benchmark')
-parser.add_argument('-n', '--num-iterations', type=int, default=1, help='Number of iterations')
-parser.add_argument('output', metavar='DIR', help='The output directory base path')
+parser = argparse.ArgumentParser(
+    description='Run all plaidbench benchmarks, redirecting output to a directory which contains the log file for each benchmark')
+parser.add_argument('-n', '--num-iterations', type=int,
+                    default=1, help='Number of iterations')
+parser.add_argument('output', metavar='DIR',
+                    help='The output directory base path')
 
 args = parser.parse_args()
 
@@ -53,7 +56,7 @@ for i in range(NUM_ITERATIONS):
 
         with open(os.path.join(RESULT_DIR, network + '.log'), 'w') as outfile:
             subprocess.run(['plaidbench', '--examples', str(EXAMPLES),
-                '--batch-size', str(BATCH_SIZE),
-                '--results', DIR_NAME,
-                'keras', '--no-fp16', '--no-train', network,
-                ], check=True, stderr=subprocess.STDOUT, stdout=outfile)
+                            '--batch-size', str(BATCH_SIZE),
+                            '--results', RESULT_DIR,
+                            'keras', '--no-fp16', '--no-train', network,
+                            ], check=True, stderr=subprocess.STDOUT, stdout=outfile)

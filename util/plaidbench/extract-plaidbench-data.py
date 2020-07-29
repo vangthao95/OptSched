@@ -39,9 +39,9 @@ Example:
         ...
 '''
 
-import os       # Used for scanning directories, getting paths, and checking files.
-import xlwt     # Used to create excel spreadsheets.
-import argparse # Used to parse commandline arguments
+import argparse  # Used to parse commandline arguments
+import os  # Used for scanning directories, getting paths, and checking files.
+import xlwt  # Used to create excel spreadsheets.
 
 # Contains all of the stats
 benchStats = {}
@@ -68,7 +68,7 @@ def parseStats(inputFolder, ignoreFolders):
     scanDirPath = os.path.abspath(inputFolder)
 
     # Get name of all directories in current folder
-    subfolders = [f.name for f in os.scandir(path=scanDirPath) if f.is_dir() ]
+    subfolders = [f.name for f in os.scandir(path=scanDirPath) if f.is_dir()]
 
     # For each folder
     for folderName in subfolders:
@@ -134,7 +134,8 @@ def parseStats(inputFolder, ignoreFolders):
                                 stats['fps'] = fps
             # If the file doesn't exist, output error log.
             else:
-                print('Cannot find log file for {} run {} benchmark {}.'.format(nameOfRun, runNumber, bench))
+                print('Cannot find log file for {} run {} benchmark {}.'.format(
+                    nameOfRun, runNumber, bench))
 
             # Save stats for this benchmark
             statsForRun[bench] = stats
@@ -145,6 +146,8 @@ def parseStats(inputFolder, ignoreFolders):
         benchStats[nameOfRun][runNumber]['total_exe_time'] = total_exe_time
 
 # Print stats gathered by script to terminal.
+
+
 def printStats():
     for nameOfRun in benchStats:
         print(nameOfRun)
@@ -152,16 +155,23 @@ def printStats():
             print('    {}'.format(runNumber))
             for bench in benchStats[nameOfRun][runNumber]:
                 if (bench == 'total_compile_time'):
-                    print('        Total compile time: {:0.3f}'.format(benchStats[nameOfRun][runNumber][bench]))
+                    print('        Total compile time: {:0.3f}'.format(
+                        benchStats[nameOfRun][runNumber][bench]))
                 elif (bench == 'total_exe_time'):
-                    print('        Total execution time: {:0.3f}'.format(benchStats[nameOfRun][runNumber][bench]))
+                    print('        Total execution time: {:0.3f}'.format(
+                        benchStats[nameOfRun][runNumber][bench]))
                 else:
                     print('        {}'.format(bench))
-                    print('            Compile Time: {:0.3f}'.format(benchStats[nameOfRun][runNumber][bench]['compile_time']))
-                    print('            Inference Latency: {:0.2f}'.format(benchStats[nameOfRun][runNumber][bench]['inference_lat']))
-                    print('            FPS: {:0.2f}'.format(benchStats[nameOfRun][runNumber][bench]['fps']))
+                    print('            Compile Time: {:0.3f}'.format(
+                        benchStats[nameOfRun][runNumber][bench]['compile_time']))
+                    print('            Inference Latency: {:0.2f}'.format(
+                        benchStats[nameOfRun][runNumber][bench]['inference_lat']))
+                    print('            FPS: {:0.2f}'.format(
+                        benchStats[nameOfRun][runNumber][bench]['fps']))
 
 # Create compile time excel spreadsheet
+
+
 def CreateCompileTimeSpreadsheet():
     # Create a new excel file
     file = xlwt.Workbook()
@@ -172,7 +182,7 @@ def CreateCompileTimeSpreadsheet():
     # Use the function write(row, col, val)
     # to write to sheet 1
     # Note: 0,0 is row 1,1 in the spreadsheet
-    sh.write(0,0, 'Benchmarks')
+    sh.write(0, 0, 'Benchmarks')
     # Set width for benchmark col
     # 36.5714285 is about equal to 1 pixel
     # Width of 18 is 131 pixels
@@ -205,7 +215,8 @@ def CreateCompileTimeSpreadsheet():
                 elif (bench == 'total_exe_time'):
                     continue
                 else:
-                    sh.write(row, col, benchStats[nameOfRun][runNumber][bench]['compile_time'])
+                    sh.write(
+                        row, col, benchStats[nameOfRun][runNumber][bench]['compile_time'])
                 row += 1
 
             # Go to next column for the next run.
@@ -215,6 +226,8 @@ def CreateCompileTimeSpreadsheet():
     file.save('compile_time.xls')
 
 # Create execution time excel spreadsheet
+
+
 def CreateExecutionTimeSpreadsheet():
     # Create a new excel file
     file = xlwt.Workbook()
@@ -225,7 +238,7 @@ def CreateExecutionTimeSpreadsheet():
     # Use the function write(row, col, val)
     # to write to sheet 1
     # Note: 0,0 is row 1,1 in the spreadsheet
-    sh.write(0,0, 'Benchmarks')
+    sh.write(0, 0, 'Benchmarks')
     # Set width for benchmark col
     # 36.5714285 is about equal to 1 pixel
     # Width of 18 is 131 pixels
@@ -258,7 +271,8 @@ def CreateExecutionTimeSpreadsheet():
                 elif (bench == 'total_compile_time'):
                     continue
                 else:
-                    sh.write(row, col, benchStats[nameOfRun][runNumber][bench]['execution_time'])
+                    sh.write(
+                        row, col, benchStats[nameOfRun][runNumber][bench]['execution_time'])
                 row += 1
 
             # Go to next column for the next run.
@@ -268,6 +282,8 @@ def CreateExecutionTimeSpreadsheet():
     file.save('execution_time.xls')
 
 # Create examples per second excel spreadsheet
+
+
 def CreateEPSSpreadsheet():
     # Create a new excel file
     file = xlwt.Workbook()
@@ -278,7 +294,7 @@ def CreateEPSSpreadsheet():
     # Use the function write(row, col, val)
     # to write to sheet 1
     # Note: 0,0 is row 1,1 in the spreadsheet
-    sh.write(0,0, 'Benchmarks')
+    sh.write(0, 0, 'Benchmarks')
     # Set width for benchmark col
     # 36.5714285 is about equal to 1 pixel
     # Width of 18 is 131 pixels
@@ -309,7 +325,8 @@ def CreateEPSSpreadsheet():
                     continue
                 else:
                     # Calculate examples per second stat then write to spreadsheet
-                    examplesPerSecond = 1000.00 / benchStats[nameOfRun][runNumber][bench]['inference_lat']
+                    examplesPerSecond = 1000.00 / \
+                        benchStats[nameOfRun][runNumber][bench]['inference_lat']
                     sh.write(row, col, examplesPerSecond)
                 row += 1
 
@@ -320,6 +337,8 @@ def CreateEPSSpreadsheet():
     file.save('examples-per-second.xls')
 
 # Create examples per second excel spreadsheet
+
+
 def CreateTPSSpreadsheet():
     # Create a new excel file
     file = xlwt.Workbook()
@@ -330,7 +349,7 @@ def CreateTPSSpreadsheet():
     # Use the function write(row, col, val)
     # to write to sheet 1
     # Note: 0,0 is row 1,1 in the spreadsheet
-    sh.write(0,0, 'Benchmarks')
+    sh.write(0, 0, 'Benchmarks')
     # Set width for benchmark col
     # 36.5714285 is about equal to 1 pixel
     # Width of 18 is 131 pixels
@@ -370,6 +389,7 @@ def CreateTPSSpreadsheet():
     # Save file to current directory.
     file.save('tiles-per-second.xls')
 
+
 def main(args):
     # Parse folders to ignore into a list
     ignoreFolders = args.ignoreFolders.split(',')
@@ -386,9 +406,16 @@ def main(args):
         CreateTPSSpreadsheet()
         CreateExecutionTimeSpreadsheet()
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Script to extract plaidbench data.',
-                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument(
+        '-i',
+        dest='inputFolder',
+        default='.',
+        help='The path to a benchmark directory')
 
     parser.add_argument('--verbose', '-v',
                         action='store_true', default=False,
@@ -399,11 +426,6 @@ if __name__ == '__main__':
                         action='store_true', default=False,
                         dest='disable',
                         help='Disable spreadsheet output.')
-
-    parser.add_argument('--input', '-i',
-                        default='.',
-                        dest='inputFolder',
-                        help='The path to scan for benchmark directories')
 
     parser.add_argument('--ignore',
                         type=str,
