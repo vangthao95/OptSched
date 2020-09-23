@@ -610,6 +610,8 @@ bool Enumerator::Initialize_(InstSchedule *sched, InstCount trgtLngth) {
   backTrackCnt_ = 0;
   iterNum_++;
 
+
+
   if (ConstrainedScheduler::Initialize_(trgtSchedLngth_, fxdLst_) == false) {
     return false;
   }
@@ -820,8 +822,11 @@ void AppendAndCheckSuffixSchedules(
                   concatSched->GetCrntLngth(), trgtSchedLngth_);
   }
 #endif
+
+if (!rgn_->isTwoPassEnabled())
+{
   auto oldCost = thisAsLengthCostEnum->GetBestCost();
-  auto newCost = rgn_->UpdtOptmlSched(concatSched.get(), thisAsLengthCostEnum);
+  auto newCost = (rgn_->UpdtOptmlSched(concatSched.get(), thisAsLengthCostEnum))[0];
 #if defined(IS_DEBUG_SUFFIX_SCHED)
   Logger::Info("Found a concatenated schedule with node instruction %d",
                crntNode_->GetInstNum());
@@ -860,6 +865,7 @@ void AppendAndCheckSuffixSchedules(
                      false);
   }
 }
+}
 } // namespace
 
 FUNC_RESULT Enumerator::FindFeasibleSchedule_(InstSchedule *sched,
@@ -884,11 +890,14 @@ FUNC_RESULT Enumerator::FindFeasibleSchedule_(InstSchedule *sched,
   uint64_t prevNodeCnt = exmndNodeCnt_;
 #endif
 
+
+
   while (!(allNodesExplrd || WasObjctvMet_())) {
     if (deadline != INVALID_VALUE && Utilities::GetProcessorTime() > deadline) {
       isTimeout = true;
       break;
     }
+
 
     mostRecentMatchingHistNode_ = nullptr;
 
@@ -926,6 +935,7 @@ FUNC_RESULT Enumerator::FindFeasibleSchedule_(InstSchedule *sched,
         isCrntNodeFsbl = BackTrack_();
       }
     } else {
+
       // All branches from the current node have been explored, and no more
       // branches that lead to feasible nodes have been found.
       if (crntNode_ == rootNode_) {
@@ -1315,6 +1325,7 @@ void SetTotalCostsAndSuffixes(EnumTreeNode *const currentNode,
     Logger::Info("Leaf node total cost %d", currentNode->GetCost());
 #endif
     currentNode->SetTotalCost(currentNode->GetCost());
+    currentNode->setTotalSpillCost(currentNode->getSpillCost());
     currentNode->SetTotalCostIsActualCost(true);
   } else {
     if (!currentNode->GetTotalCostIsActualCost() &&
@@ -1326,6 +1337,7 @@ void SetTotalCostsAndSuffixes(EnumTreeNode *const currentNode,
                    currentNode->GetCostLwrBound());
 #endif
       currentNode->SetTotalCost(currentNode->GetCostLwrBound());
+      currentNode->setTotalSpillCost(currentNode->getSpillCostLwrBound());
     }
   }
 
@@ -1358,6 +1370,7 @@ void SetTotalCostsAndSuffixes(EnumTreeNode *const currentNode,
                      currentNode->GetTotalCost());
 #endif
         parentNode->SetTotalCost(currentNode->GetTotalCost());
+        parentNode->setTotalSpillCost(currentNode->getTotalSpillCost());
         parentNode->SetTotalCostIsActualCost(true);
         parentNode->SetSuffix(std::move(parentSuffix));
       } else if (currentNode->GetTotalCost() < parentNode->GetTotalCost()) {
@@ -1367,6 +1380,7 @@ void SetTotalCostsAndSuffixes(EnumTreeNode *const currentNode,
             currentNode->GetTotalCost(), parentNode->GetTotalCost());
 #endif
         parentNode->SetTotalCost(currentNode->GetTotalCost());
+        parentNode->setTotalSpillCost(currentNode->getTotalSpillCost());
         parentNode->SetSuffix(std::move(parentSuffix));
       }
     }
@@ -1529,6 +1543,7 @@ bool Enumerator::WasDmnntSubProbExmnd_(SchedInstruction *,
             (exNode->GetSuffix() != nullptr) ? exNode : nullptr;
         mostRecentMatchWasSet = true;
       }
+
       if (exNode->DoesDominate(newNode, this)) {
 
 #ifdef IS_DEBUG_SPD
@@ -2017,6 +2032,18 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
                                                        Milliseconds deadline) {
   rgn_ = rgn;
   costLwrBound_ = costLwrBound;
+  SpillCostLwrBound_ = rgn_->getSpillCostLwrBound();
+
+  this->setIsSecondPass(rgn_->IsSecondPass());
+  this->setIsTwoPass(rgn_->isTwoPassEnabled());
+
+
+  if (rgn_->IsSecondPass())
+    TrgtSpillConstraint_ = rgn_->getSpillCostConstraint();
+
+  else
+    TrgtSpillConstraint_ = SpillCostLwrBound_;
+
   FUNC_RESULT rslt = FindFeasibleSchedule_(sched, trgtLngth, deadline);
 
 #ifdef IS_DEBUG_TRACE_ENUM
@@ -2031,22 +2058,75 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
 /*****************************************************************************/
 
 bool LengthCostEnumerator::WasObjctvMet_() {
+  std::vector<InstCount> ObjctvValues;
+
+  if (!IsSchedComplete_())
+    return false;
+
   assert(GetBestCost_() >= 0);
 
   if (WasSolnFound_() == false) {
     return false;
   }
 
-  InstCount crntCost = GetBestCost_();
+  if (!rgn_->isTwoPassEnabled())
+    return WasObjctvMetWghtd_();
 
-  InstCount newCost = rgn_->UpdtOptmlSched(crntSched_, this);
-  assert(newCost <= GetBestCost_());
-
-  if (newCost < crntCost) {
-    imprvmntCnt_++;
+  else
+  {
+    if (!rgn_->IsSecondPass())
+      return WasObjctvMetFrstPss_();
+    else
+      return WasObjctvMetScndPss_();
   }
+}
+/*****************************************************************************/
 
-  return newCost == costLwrBound_;
+bool LengthCostEnumerator::WasObjctvMetWghtd_(){
+    vector<InstCount> ObjctvValues;
+
+    InstCount crntCost = GetBestCost_();
+
+    ObjctvValues = rgn_->UpdtOptmlSchedWghtd(crntSched_, this);
+
+    if (ObjctvValues[0] < crntCost)
+      imprvmntCnt_++;
+
+    return (ObjctvValues[0] == costLwrBound_);
+}
+/*****************************************************************************/
+
+bool LengthCostEnumerator::WasObjctvMetFrstPss_()
+{
+    vector<InstCount> ObjctvValues;
+
+    InstCount crntSpillCost = getBestSpillCost_();
+
+    ObjctvValues = rgn_->UpdtOptmlSchedFrstPss(crntSched_, this);
+
+
+    if (ObjctvValues[0] < crntSpillCost)
+      imprvmntCnt_++;
+
+    return (ObjctvValues[0] == SpillCostLwrBound_);
+}
+/*****************************************************************************/
+
+bool LengthCostEnumerator::WasObjctvMetScndPss_()
+{
+    vector<InstCount> ObjctvValues;
+
+    InstCount crntSchedLength = getBestSchedLength_();
+
+    ObjctvValues = rgn_->UpdtOptmlSchedScndPss(crntSched_, this);
+
+
+    if (ObjctvValues[1] < crntSchedLength &&
+        ObjctvValues[0] == rgn_->getSpillCostConstraint())
+      imprvmntCnt_++;
+
+    return (ObjctvValues[1] <= trgtSchedLngth_ &&
+            ObjctvValues[0] == rgn_->getSpillCostConstraint());
 }
 /*****************************************************************************/
 
@@ -2131,7 +2211,8 @@ bool LengthCostEnumerator::BackTrack_() {
   if (prune_.spillCost) {
     if (fsbl) {
       assert(crntNode_->GetCostLwrBound() >= 0);
-      fsbl = crntNode_->GetCostLwrBound() < GetBestCost_();
+      if (!rgn_->isTwoPassEnabled())
+        fsbl = crntNode_->GetCostLwrBound() < GetBestCost_();
     }
   }
 
@@ -2140,6 +2221,11 @@ bool LengthCostEnumerator::BackTrack_() {
 /*****************************************************************************/
 
 InstCount LengthCostEnumerator::GetBestCost_() { return rgn_->GetBestCost(); }
+
+InstCount LengthCostEnumerator::getBestSpillCost_() { return rgn_->getBestSpillCost(); }
+
+InstCount LengthCostEnumerator::getBestSchedLength_() { return rgn_->getBestSchedLength(); }
+
 /*****************************************************************************/
 
 void LengthCostEnumerator::CreateRootNode_() {
