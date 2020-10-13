@@ -65,7 +65,7 @@ public:
   // Return the spill cost for first pass of this region
   inline InstCount getSpillCostConstraint() const { return HurstcSpillCost_; }
   // Returns the best spill cost found so far for this region
-  inline InstCount getBestSpillCost() { return BestSpillCost_;}
+  inline InstCount getBestSpillCost() { return BestSpillCost_; }
   // Returns a pointer to the list scheduler heurisitcs.
   inline SchedPriorities GetHeuristicPriorities() { return hurstcPrirts_; }
   // Get the number of simulated spills code added for this block.
@@ -90,17 +90,20 @@ public:
   virtual int cmputSpillCostLwrBound() = 0;
 
   // TODO(max): Document.
-  virtual std::vector<InstCount> UpdtOptmlSched(InstSchedule *crntSched,
-                                   LengthCostEnumerator *enumrtr) = 0;
+  virtual std::vector<InstCount>
+  UpdtOptmlSched(InstSchedule *crntSched, LengthCostEnumerator *enumrtr) = 0;
 
-  virtual std::vector<InstCount> UpdtOptmlSchedFrstPss(InstSchedule *crntSched,
-                                   LengthCostEnumerator *enumrtr) = 0;
+  virtual std::vector<InstCount>
+  UpdtOptmlSchedFrstPss(InstSchedule *crntSched,
+                        LengthCostEnumerator *enumrtr) = 0;
 
-  virtual std::vector<InstCount> UpdtOptmlSchedScndPss(InstSchedule *crntSched,
-                                   LengthCostEnumerator *enumrtr) = 0;
+  virtual std::vector<InstCount>
+  UpdtOptmlSchedScndPss(InstSchedule *crntSched,
+                        LengthCostEnumerator *enumrtr) = 0;
 
-  virtual std::vector<InstCount> UpdtOptmlSchedWghtd(InstSchedule *crntSched,
-                                   LengthCostEnumerator *enumrtr) = 0;
+  virtual std::vector<InstCount>
+  UpdtOptmlSchedWghtd(InstSchedule *crntSched,
+                      LengthCostEnumerator *enumrtr) = 0;
 
   // TODO(max): Document.
   virtual bool ChkCostFsblty(InstCount trgtLngth, EnumTreeNode *treeNode) = 0;
@@ -131,7 +134,8 @@ public:
   // Initialize variables for the second pass of the two-pass-optsched
   void InitSecondPass();
 
-  // Initiliaze variables to reflect that we are using two-pass version of algorithm
+  // Initiliaze variables to reflect that we are using two-pass version of
+  // algorithm
   void initTwoPassAlg();
 
   bool isTwoPassEnabled() const { return TwoPassEnabled_; }
@@ -223,9 +227,13 @@ protected:
     bestSchedLngth_ = bestSchedLngth;
   }
 
-  void setBestSpillCost(InstCount BestSpillCost) { BestSpillCost_ = BestSpillCost; }
+  void setBestSpillCost(InstCount BestSpillCost) {
+    BestSpillCost_ = BestSpillCost;
+  }
 
-  void setSpillCostLwrBound(InstCount SpillCostLwrBound) {SpillCostLwrBound_ = SpillCostLwrBound; }
+  void setSpillCostLwrBound(InstCount SpillCostLwrBound) {
+    SpillCostLwrBound_ = SpillCostLwrBound;
+  }
 
   const SchedPriorities &GetEnumPriorities() const { return enumPrirts_; }
 
@@ -284,7 +292,7 @@ protected:
   virtual const std::vector<int> &GetSLIL_() const = 0;
 
   FUNC_RESULT runACO(InstSchedule *ReturnSched, InstSchedule *InitSched,
-                        bool IsPostBB);
+                     bool IsPostBB);
 };
 
 } // namespace opt_sched

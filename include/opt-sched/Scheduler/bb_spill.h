@@ -124,13 +124,13 @@ public:
   int cmputSpillCostLwrBound();
 
   std::vector<InstCount> UpdtOptmlSched(InstSchedule *crntSched,
-                           LengthCostEnumerator *enumrtr);
+                                        LengthCostEnumerator *enumrtr);
   std::vector<InstCount> UpdtOptmlSchedFrstPss(InstSchedule *crntSched,
-                           LengthCostEnumerator *enumrtr);
+                                               LengthCostEnumerator *enumrtr);
   std::vector<InstCount> UpdtOptmlSchedScndPss(InstSchedule *crntSched,
-                           LengthCostEnumerator *enumrtr);
+                                               LengthCostEnumerator *enumrtr);
   std::vector<InstCount> UpdtOptmlSchedWghtd(InstSchedule *crntSched,
-                           LengthCostEnumerator *enumrtr);
+                                             LengthCostEnumerator *enumrtr);
   bool ChkCostFsblty(InstCount trgtLngth, EnumTreeNode *treeNode);
   bool ChkCostFsbltyFrstPss(InstCount trgtLngth, EnumTreeNode *treeNode);
   bool ChkCostFsbltyScndPss(InstCount trgtLngth, EnumTreeNode *treeNode);

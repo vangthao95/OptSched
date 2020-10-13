@@ -282,7 +282,8 @@ FUNC_RESULT SchedRegion::FindOptimalSchedule(
   // TODO(justin): Remove once relevant scripts have been updated:
   // plaidbench-validation-test.py, runspec-wrapper-SLIL.py
   Logger::Info("Lower bound of cost before scheduling: %d", costLwrBound_);
-  Logger::Info("Lower bound of spill cost before scheduling: %d", SpillCostLwrBound_);
+  Logger::Info("Lower bound of spill cost before scheduling: %d",
+               SpillCostLwrBound_);
 
   // Step #2: Use ACO to find a schedule if enabled and no optimal schedule is
   // yet to be found.
@@ -342,8 +343,7 @@ FUNC_RESULT SchedRegion::FindOptimalSchedule(
       bestSched = bestSched_ = AcoSchedule;
       bestSchedLngth_ = AcoScheduleLength_;
       bestCost_ = AcoScheduleCost_;
-      //need to set spillCost
-
+      // need to set spillCost
 
       // C) Neither scheduler was optimal. In that case, compare the two
       // schedules and use the one that's better as the input (initialSched) for
@@ -353,8 +353,7 @@ FUNC_RESULT SchedRegion::FindOptimalSchedule(
       bestSched = bestSched_;
       bestSchedLngth_ = bestSched_->GetCrntLngth();
       bestCost_ = bestSched_->GetCost();
-      //need to set spillCost
-
+      // need to set spillCost
     }
   }
   // Step #3: Compute the cost upper bound.
@@ -430,7 +429,8 @@ FUNC_RESULT SchedRegion::FindOptimalSchedule(
     if (!isLstOptml) {
       dataDepGraph_->SetHard(true);
       if ((IsSecondPass() && dataDepGraph_->GetMaxLtncy() <= 1))
-        Logger::Info("Problem size not increased after introducing latencies, skipping enumeration");
+        Logger::Info("Problem size not increased after introducing latencies, "
+                     "skipping enumeration");
       else
         rslt = Optimize_(enumStart, rgnTimeout, lngthTimeout);
 
@@ -762,7 +762,7 @@ void SchedRegion::CmputLwrBounds_(bool useFileBounds) {
     UseFileBounds_();
 
   costLwrBound_ = CmputCostLwrBound();
-  //SpillCostLwrBound_ = getSpillCostLwrBound();
+  // SpillCostLwrBound_ = getSpillCostLwrBound();
 
   delete rlxdSchdulr;
   delete rvrsRlxdSchdulr;
@@ -903,8 +903,8 @@ FUNC_RESULT SchedRegion::runACO(InstSchedule *ReturnSched,
                                 InstSchedule *InitSched, bool IsPostBB) {
   InitForSchdulng();
   ACOScheduler *AcoSchdulr =
-  new ACOScheduler(dataDepGraph_, machMdl_, abslutSchedUprBound_,
-                    hurstcPrirts_, vrfySched_, IsPostBB);
+      new ACOScheduler(dataDepGraph_, machMdl_, abslutSchedUprBound_,
+                       hurstcPrirts_, vrfySched_, IsPostBB);
   AcoSchdulr->setInitialSched(InitSched);
   FUNC_RESULT Rslt = AcoSchdulr->FindSchedule(ReturnSched, this);
   delete AcoSchdulr;

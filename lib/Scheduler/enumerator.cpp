@@ -610,8 +610,6 @@ bool Enumerator::Initialize_(InstSchedule *sched, InstCount trgtLngth) {
   backTrackCnt_ = 0;
   iterNum_++;
 
-
-
   if (ConstrainedScheduler::Initialize_(trgtSchedLngth_, fxdLst_) == false) {
     return false;
   }
@@ -691,7 +689,7 @@ void Enumerator::SetInstSigs_() {
     // now, place the instruction number in the least significant bits
     sig |= i;
 
-    //    sig &= 0x7fffffffffffffff;
+    // sig &= 0x7fffffffffffffff;
     sig &= 0x7fffffff;
 
     assert(sig != 0);
@@ -823,48 +821,48 @@ void AppendAndCheckSuffixSchedules(
   }
 #endif
 
-if (!rgn_->isTwoPassEnabled())
-{
-  auto oldCost = thisAsLengthCostEnum->GetBestCost();
-  auto newCost = (rgn_->UpdtOptmlSched(concatSched.get(), thisAsLengthCostEnum))[0];
+  if (!rgn_->isTwoPassEnabled()) {
+    auto oldCost = thisAsLengthCostEnum->GetBestCost();
+    auto newCost =
+        (rgn_->UpdtOptmlSched(concatSched.get(), thisAsLengthCostEnum))[0];
 #if defined(IS_DEBUG_SUFFIX_SCHED)
-  Logger::Info("Found a concatenated schedule with node instruction %d",
-               crntNode_->GetInstNum());
+    Logger::Info("Found a concatenated schedule with node instruction %d",
+                 crntNode_->GetInstNum());
 #endif
-  if (newCost < oldCost) {
+    if (newCost < oldCost) {
 #if defined(IS_DEBUG_SUFFIX_SCHED)
-    Logger::Info("Suffix Scheduling: Concatenated schedule has better "
-                 "cost %d than best schedule %d!",
-                 newCost, oldCost);
+      Logger::Info("Suffix Scheduling: Concatenated schedule has better "
+                   "cost %d than best schedule %d!",
+                   newCost, oldCost);
 #endif
-    // Don't forget to update the total cost and suffix for this node,
-    // because we intentionally backtrack without visiting its
-    // children.
-    crntNode_->SetTotalCost(newCost);
-    crntNode_->SetTotalCostIsActualCost(true);
-    if (newCost == 0) {
-      Logger::Info(
-          "Suffix Scheduling: ***GOOD*** Schedule of cost 0 was found!");
+      // Don't forget to update the total cost and suffix for this node,
+      // because we intentionally backtrack without visiting its
+      // children.
+      crntNode_->SetTotalCost(newCost);
+      crntNode_->SetTotalCostIsActualCost(true);
+      if (newCost == 0) {
+        Logger::Info(
+            "Suffix Scheduling: ***GOOD*** Schedule of cost 0 was found!");
+      }
+    } else {
+#if defined(IS_DEBUG_SUFFIX_SCHED)
+      Logger::Info("Suffix scheduling: Concatenated schedule does not have "
+                   "better cost %d than best schedule %d.",
+                   newCost, oldCost);
+#endif
     }
-  } else {
-#if defined(IS_DEBUG_SUFFIX_SCHED)
-    Logger::Info("Suffix scheduling: Concatenated schedule does not have "
-                 "better cost %d than best schedule %d.",
-                 newCost, oldCost);
-#endif
-  }
 
-  // Before backtracking, reset the SchedRegion state to where it was before
-  // concatenation.
-  rgn_->InitForSchdulng();
-  InstCount cycleNum, slotNum;
-  for (auto instNum = crntSched_->GetFrstInst(cycleNum, slotNum);
-       instNum != INVALID_VALUE;
-       instNum = crntSched_->GetNxtInst(cycleNum, slotNum)) {
-    rgn_->SchdulInst(dataDepGraph_->GetInstByIndx(instNum), cycleNum, slotNum,
-                     false);
+    // Before backtracking, reset the SchedRegion state to where it was before
+    // concatenation.
+    rgn_->InitForSchdulng();
+    InstCount cycleNum, slotNum;
+    for (auto instNum = crntSched_->GetFrstInst(cycleNum, slotNum);
+         instNum != INVALID_VALUE;
+         instNum = crntSched_->GetNxtInst(cycleNum, slotNum)) {
+      rgn_->SchdulInst(dataDepGraph_->GetInstByIndx(instNum), cycleNum, slotNum,
+                       false);
+    }
   }
-}
 }
 } // namespace
 
@@ -890,14 +888,11 @@ FUNC_RESULT Enumerator::FindFeasibleSchedule_(InstSchedule *sched,
   uint64_t prevNodeCnt = exmndNodeCnt_;
 #endif
 
-
-
   while (!(allNodesExplrd || WasObjctvMet_())) {
     if (deadline != INVALID_VALUE && Utilities::GetProcessorTime() > deadline) {
       isTimeout = true;
       break;
     }
-
 
     mostRecentMatchingHistNode_ = nullptr;
 
@@ -2037,7 +2032,6 @@ FUNC_RESULT LengthCostEnumerator::FindFeasibleSchedule(InstSchedule *sched,
   this->setIsSecondPass(rgn_->IsSecondPass());
   this->setIsTwoPass(rgn_->isTwoPassEnabled());
 
-
   if (rgn_->IsSecondPass())
     TrgtSpillConstraint_ = rgn_->getSpillCostConstraint();
 
@@ -2072,8 +2066,7 @@ bool LengthCostEnumerator::WasObjctvMet_() {
   if (!rgn_->isTwoPassEnabled())
     return WasObjctvMetWghtd_();
 
-  else
-  {
+  else {
     if (!rgn_->IsSecondPass())
       return WasObjctvMetFrstPss_();
     else
@@ -2082,51 +2075,47 @@ bool LengthCostEnumerator::WasObjctvMet_() {
 }
 /*****************************************************************************/
 
-bool LengthCostEnumerator::WasObjctvMetWghtd_(){
-    vector<InstCount> ObjctvValues;
+bool LengthCostEnumerator::WasObjctvMetWghtd_() {
+  vector<InstCount> ObjctvValues;
 
-    InstCount crntCost = GetBestCost_();
+  InstCount crntCost = GetBestCost_();
 
-    ObjctvValues = rgn_->UpdtOptmlSchedWghtd(crntSched_, this);
+  ObjctvValues = rgn_->UpdtOptmlSchedWghtd(crntSched_, this);
 
-    if (ObjctvValues[0] < crntCost)
-      imprvmntCnt_++;
+  if (ObjctvValues[0] < crntCost)
+    imprvmntCnt_++;
 
-    return (ObjctvValues[0] == costLwrBound_);
+  return (ObjctvValues[0] == costLwrBound_);
 }
 /*****************************************************************************/
 
-bool LengthCostEnumerator::WasObjctvMetFrstPss_()
-{
-    vector<InstCount> ObjctvValues;
+bool LengthCostEnumerator::WasObjctvMetFrstPss_() {
+  vector<InstCount> ObjctvValues;
 
-    InstCount crntSpillCost = getBestSpillCost_();
+  InstCount crntSpillCost = getBestSpillCost_();
 
-    ObjctvValues = rgn_->UpdtOptmlSchedFrstPss(crntSched_, this);
+  ObjctvValues = rgn_->UpdtOptmlSchedFrstPss(crntSched_, this);
 
+  if (ObjctvValues[0] < crntSpillCost)
+    imprvmntCnt_++;
 
-    if (ObjctvValues[0] < crntSpillCost)
-      imprvmntCnt_++;
-
-    return (ObjctvValues[0] == SpillCostLwrBound_);
+  return (ObjctvValues[0] == SpillCostLwrBound_);
 }
 /*****************************************************************************/
 
-bool LengthCostEnumerator::WasObjctvMetScndPss_()
-{
-    vector<InstCount> ObjctvValues;
+bool LengthCostEnumerator::WasObjctvMetScndPss_() {
+  vector<InstCount> ObjctvValues;
 
-    InstCount crntSchedLength = getBestSchedLength_();
+  InstCount crntSchedLength = getBestSchedLength_();
 
-    ObjctvValues = rgn_->UpdtOptmlSchedScndPss(crntSched_, this);
+  ObjctvValues = rgn_->UpdtOptmlSchedScndPss(crntSched_, this);
 
+  if (ObjctvValues[1] < crntSchedLength &&
+      ObjctvValues[0] == rgn_->getSpillCostConstraint())
+    imprvmntCnt_++;
 
-    if (ObjctvValues[1] < crntSchedLength &&
-        ObjctvValues[0] == rgn_->getSpillCostConstraint())
-      imprvmntCnt_++;
-
-    return (ObjctvValues[1] <= trgtSchedLngth_ &&
-            ObjctvValues[0] == rgn_->getSpillCostConstraint());
+  return (ObjctvValues[1] <= trgtSchedLngth_ &&
+          ObjctvValues[0] == rgn_->getSpillCostConstraint());
 }
 /*****************************************************************************/
 
@@ -2222,9 +2211,13 @@ bool LengthCostEnumerator::BackTrack_() {
 
 InstCount LengthCostEnumerator::GetBestCost_() { return rgn_->GetBestCost(); }
 
-InstCount LengthCostEnumerator::getBestSpillCost_() { return rgn_->getBestSpillCost(); }
+InstCount LengthCostEnumerator::getBestSpillCost_() {
+  return rgn_->getBestSpillCost();
+}
 
-InstCount LengthCostEnumerator::getBestSchedLength_() { return rgn_->getBestSchedLength(); }
+InstCount LengthCostEnumerator::getBestSchedLength_() {
+  return rgn_->getBestSchedLength();
+}
 
 /*****************************************************************************/
 

@@ -291,7 +291,7 @@ InstCount BBWithSpill::CmputCostLwrBound() {
   InstCount SpillCostLwrBound = cmputSpillCostLwrBound();
   setSpillCostLwrBound(SpillCostLwrBound);
 
-    // for(InstCount i=0; i< dataDepGraph_->GetInstCnt(); i++) {
+  // for(InstCount i=0; i< dataDepGraph_->GetInstCnt(); i++) {
   //   inst = dataDepGraph_->GetInstByIndx(i);
   // }
 
@@ -308,9 +308,8 @@ InstCount BBWithSpill::CmputCostLwrBound() {
   return staticLowerBound;
 }
 
-
 InstCount BBWithSpill::cmputSpillCostLwrBound() {
-    InstCount spillCostLwrBound = 0;
+  InstCount spillCostLwrBound = 0;
 
   if (GetSpillCostFunc() == SCF_SLIL) {
     spillCostLwrBound =
@@ -319,7 +318,7 @@ InstCount BBWithSpill::cmputSpillCostLwrBound() {
     staticSlilLowerBound_ = spillCostLwrBound;
   }
 
-    return spillCostLwrBound;
+  return spillCostLwrBound;
 }
 /*****************************************************************************/
 
@@ -787,7 +786,7 @@ FUNC_RESULT BBWithSpill::Enumerate_(Milliseconds startTime,
   FUNC_RESULT rslt = RES_SUCCESS;
   int iterCnt = 0;
   int costLwrBound = 0;
-  //int SpillCostLwrBound = cmputSpillCostLwrBound();
+  // int SpillCostLwrBound = cmputSpillCostLwrBound();
   bool timeout = false;
 
   Milliseconds rgnDeadline, lngthDeadline;
@@ -810,7 +809,6 @@ FUNC_RESULT BBWithSpill::Enumerate_(Milliseconds startTime,
     if (GetBestCost() == 0 || rslt == RES_ERROR ||
         (lngthDeadline == rgnDeadline && rslt == RES_TIMEOUT) ||
         (rslt == RES_SUCCESS && IsSecondPass())) {
-
 
       // If doing two pass optsched and on the second pass then terminate if a
       // schedule is found with the same min-RP found in first pass.
@@ -858,10 +856,9 @@ FUNC_RESULT BBWithSpill::Enumerate_(Milliseconds startTime,
 /*****************************************************************************/
 
 std::vector<InstCount> BBWithSpill::UpdtOptmlSched(InstSchedule *crntSched,
-                                      LengthCostEnumerator *node) {
+                                                   LengthCostEnumerator *node) {
 
-  if (isTwoPassEnabled())
-  {
+  if (isTwoPassEnabled()) {
     if (!IsSecondPass())
       return UpdtOptmlSchedFrstPss(crntSched, node);
     else
@@ -869,13 +866,14 @@ std::vector<InstCount> BBWithSpill::UpdtOptmlSched(InstSchedule *crntSched,
   }
 
   else
-      return UpdtOptmlSchedWghtd(crntSched, node);
+    return UpdtOptmlSchedWghtd(crntSched, node);
 }
 
 /*****************************************************************************/
 
-std::vector<InstCount> BBWithSpill::UpdtOptmlSchedFrstPss(InstSchedule *crntSched,
-                                      LengthCostEnumerator *) {
+std::vector<InstCount>
+BBWithSpill::UpdtOptmlSchedFrstPss(InstSchedule *crntSched,
+                                   LengthCostEnumerator *) {
   InstCount crntCost;
   InstCount crntExecCost;
   vector<InstCount> retVec;
@@ -905,8 +903,9 @@ std::vector<InstCount> BBWithSpill::UpdtOptmlSchedFrstPss(InstSchedule *crntSche
 
 /*****************************************************************************/
 
-std::vector<InstCount> BBWithSpill::UpdtOptmlSchedScndPss(InstSchedule *crntSched,
-                                      LengthCostEnumerator *) {
+std::vector<InstCount>
+BBWithSpill::UpdtOptmlSchedScndPss(InstSchedule *crntSched,
+                                   LengthCostEnumerator *) {
   InstCount crntCost;
   InstCount crntExecCost;
   vector<InstCount> retVec;
@@ -921,8 +920,8 @@ std::vector<InstCount> BBWithSpill::UpdtOptmlSchedScndPss(InstSchedule *crntSche
   //  crntSched->Print(Logger::GetLogStream(), "New Feasible Schedule");
   //#endif
 
-  if (crntSpillCost_ <= getSpillCostConstraint() &&  crntSched->GetCrntLngth() < getBestSchedLength())
-  {
+  if (crntSpillCost_ <= getSpillCostConstraint() &&
+      crntSched->GetCrntLngth() < getBestSchedLength()) {
     SetBestCost(crntCost);
     optmlSpillCost_ = crntSpillCost_;
     setBestSpillCost(optmlSpillCost_);
@@ -931,14 +930,16 @@ std::vector<InstCount> BBWithSpill::UpdtOptmlSchedScndPss(InstSchedule *crntSche
     bestSched_ = enumBestSched_;
   }
 
-  retVec.push_back(crntSpillCost_); retVec.push_back(crntSched->GetCrntLngth());
+  retVec.push_back(crntSpillCost_);
+  retVec.push_back(crntSched->GetCrntLngth());
   return retVec;
 }
 
 /*****************************************************************************/
 
-std::vector<InstCount> BBWithSpill::UpdtOptmlSchedWghtd(InstSchedule *crntSched,
-                                      LengthCostEnumerator *) {
+std::vector<InstCount>
+BBWithSpill::UpdtOptmlSchedWghtd(InstSchedule *crntSched,
+                                 LengthCostEnumerator *) {
   vector<InstCount> retVec;
   InstCount crntCost;
   InstCount crntExecCost;
@@ -995,8 +996,7 @@ void BBWithSpill::SetupForSchdulng_() {
 bool BBWithSpill::ChkCostFsblty(InstCount trgtLngth, EnumTreeNode *node) {
   bool fsbl = true;
 
-  if (isTwoPassEnabled())
-  {
+  if (isTwoPassEnabled()) {
     if (!IsSecondPass())
       fsbl = ChkCostFsbltyFrstPss(trgtLngth, node);
     else
@@ -1011,14 +1011,15 @@ bool BBWithSpill::ChkCostFsblty(InstCount trgtLngth, EnumTreeNode *node) {
 
 /*****************************************************************************/
 
-bool BBWithSpill::ChkCostFsbltyFrstPss(InstCount trgtLngth, EnumTreeNode *node) {
+bool BBWithSpill::ChkCostFsbltyFrstPss(InstCount trgtLngth,
+                                       EnumTreeNode *node) {
   bool fsbl;
   InstCount TmpSpillCost;
 
   InstCount crntCost;
   if (GetSpillCostFunc() == SCF_SLIL) {
     TmpSpillCost = dynamicSlilLowerBound_;
-    //this line currently needed for hist dom
+    // this line currently needed for hist dom
     crntCost = dynamicSlilLowerBound_ * SCW_ + trgtLngth * schedCostFactor_;
     fsbl = dynamicSlilLowerBound_ < getBestSpillCost();
   }
@@ -1044,23 +1045,21 @@ bool BBWithSpill::ChkCostFsbltyFrstPss(InstCount trgtLngth, EnumTreeNode *node) 
   }
 
   return fsbl;
-
 }
 
 /*****************************************************************************/
 
-bool BBWithSpill::ChkCostFsbltyScndPss(InstCount trgtLngth, EnumTreeNode *node) {
+bool BBWithSpill::ChkCostFsbltyScndPss(InstCount trgtLngth,
+                                       EnumTreeNode *node) {
   InstCount TmpSpillCost;
   InstCount crntCost;
 
-  if (GetSpillCostFunc() == SCF_SLIL)
-  {
+  if (GetSpillCostFunc() == SCF_SLIL) {
     crntCost = dynamicSlilLowerBound_ * SCW_ + trgtLngth * schedCostFactor_;
     TmpSpillCost = dynamicSlilLowerBound_;
   }
 
-  else
-  {
+  else {
     crntCost = crntSpillCost_ * SCW_ + trgtLngth * schedCostFactor_;
     TmpSpillCost = crntSpillCost_;
   }
@@ -1070,8 +1069,7 @@ bool BBWithSpill::ChkCostFsbltyScndPss(InstCount trgtLngth, EnumTreeNode *node) 
   // assert(cost >= 0);
   assert(crntCost >= 0);
 
-
-  if (crntSpillCost_ <= getSpillCostConstraint()){
+  if (crntSpillCost_ <= getSpillCostConstraint()) {
     node->SetCost(crntCost);
     node->SetCostLwrBound(crntCost);
     node->SetPeakSpillCost(peakSpillCost_);

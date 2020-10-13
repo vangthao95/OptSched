@@ -273,8 +273,10 @@ public:
   inline void SetCostLwrBound(InstCount bound);
   inline InstCount GetCostLwrBound();
 
-  inline void setSpillCostLwrBound(InstCount bound) {SpillCostLwrBound_ = bound; }
-  inline InstCount getSpillCostLwrBound() const {return SpillCostLwrBound_; }
+  inline void setSpillCostLwrBound(InstCount bound) {
+    SpillCostLwrBound_ = bound;
+  }
+  inline InstCount getSpillCostLwrBound() const { return SpillCostLwrBound_; }
 
   inline void SetPeakSpillCost(InstCount cost);
   inline InstCount GetPeakSpillCost();
@@ -293,8 +295,10 @@ public:
   int GetRealSlotNum() { return realSlotNum_; }
   void SetRealSlotNum(int num) { realSlotNum_ = num; }
 
-  inline InstCount getTotalSpillCost() const {return TotalSpillCost_; }
-  inline void setTotalSpillCost(InstCount TotalSpillCost) {TotalSpillCost_ = TotalSpillCost; }
+  inline InstCount getTotalSpillCost() const { return TotalSpillCost_; }
+  inline void setTotalSpillCost(InstCount TotalSpillCost) {
+    TotalSpillCost_ = TotalSpillCost;
+  }
 
   inline InstCount GetTotalCost() const { return totalCost_; }
   inline void SetTotalCost(InstCount totalCost) { totalCost_ = totalCost; }
@@ -427,7 +431,6 @@ protected:
   bool IsTwoPassEnabled_;
   bool IsSecondPass_;
 
-
   LISTSCHED_HEURISTIC enumHurstc_;
 
   bool isEarlySubProbDom_;
@@ -506,11 +509,15 @@ protected:
   virtual void FreeAllocators_();
   virtual void ResetAllocators_();
 
-  inline bool getIsTwoPass() {return IsTwoPassEnabled_;}
-  inline bool getIsSecondPass() {return IsSecondPass_;}
+  inline bool getIsTwoPass() { return IsTwoPassEnabled_; }
+  inline bool getIsSecondPass() { return IsSecondPass_; }
 
-  inline void setIsTwoPass(bool IsTwoPassEnabled ) {IsTwoPassEnabled_ = IsTwoPassEnabled;}
-  inline void setIsSecondPass(bool IsSecondPass ) {IsSecondPass_ = IsSecondPass;}
+  inline void setIsTwoPass(bool IsTwoPassEnabled) {
+    IsTwoPassEnabled_ = IsTwoPassEnabled;
+  }
+  inline void setIsSecondPass(bool IsSecondPass) {
+    IsSecondPass_ = IsSecondPass;
+  }
 
   void PrintLog_();
 
@@ -644,8 +651,7 @@ public:
   // Given a schedule with some instructions possibly fixed, find a
   // feasible schedule of the given target length if possible
   FUNC_RESULT FindFeasibleSchedule(InstSchedule *sched, InstCount trgtLngth,
-                                   SchedRegion *rgn,
-                                   int costLwrBound,
+                                   SchedRegion *rgn, int costLwrBound,
                                    Milliseconds deadline);
   bool IsCostEnum();
   SPILL_COST_FUNCTION GetSpillCostFunc() { return spillCostFunc_; }
@@ -653,8 +659,8 @@ public:
   inline InstCount getBestSpillCost() { return getBestSpillCost_(); }
   inline InstCount getBestSchedLength() { return getBestSchedLength_(); }
 
-  inline InstCount getTrgtLngth() {return trgtSchedLngth_; }
-  inline InstCount getTrgtSpillCostConstrnt() {return TrgtSpillConstraint_;}
+  inline InstCount getTrgtLngth() { return trgtSchedLngth_; }
+  inline InstCount getTrgtSpillCostConstrnt() { return TrgtSpillConstraint_; }
 };
 /*****************************************************************************/
 
@@ -890,8 +896,7 @@ void EnumTreeNode::SetSpillCostSum(InstCount cost) {
 InstCount EnumTreeNode::GetSpillCostSum() { return spillCostSum_; }
 /*****************************************************************************/
 
-void EnumTreeNode::setSpillCost(InstCount SpillCost)
-{
+void EnumTreeNode::setSpillCost(InstCount SpillCost) {
   assert(SpillCost >= 0);
   SpillCost_ = SpillCost;
 }

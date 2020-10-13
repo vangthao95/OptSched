@@ -404,9 +404,9 @@ void CostHistEnumTreeNode::Init_() {
 
 bool CostHistEnumTreeNode::DoesDominate(EnumTreeNode *node,
                                         Enumerator *enumrtr) {
-  #ifdef IS_DEBUG
-    assert(isCnstrctd_);
-  #endif
+#ifdef IS_DEBUG
+  assert(isCnstrctd_);
+#endif
   assert(enumrtr->IsCostEnum());
 
   InstCount shft = 0;
@@ -458,7 +458,8 @@ static bool doesHistorySLILCostDominateFrstPss(InstCount OtherPrefixSpillCost,
                                                InstCount HistPrefixSpillCost,
                                                InstCount HistTotalSpillCost,
                                                LengthCostEnumerator *LCE) {
-  auto RequiredImprovement = std::max(HistTotalSpillCost - LCE->getBestSpillCost() ,0 );
+  auto RequiredImprovement =
+      std::max(HistTotalSpillCost - LCE->getBestSpillCost(), 0);
   auto ImprovementOnHistory = HistPrefixSpillCost - OtherPrefixSpillCost;
   return ImprovementOnHistory <= RequiredImprovement;
 }
@@ -466,12 +467,12 @@ static bool doesHistorySLILCostDominateFrstPss(InstCount OtherPrefixSpillCost,
 static bool doesHistorySLILCostDominateScndPss(InstCount OtherPrefixSpillCost,
                                                InstCount HistPrefixSpillCost,
                                                InstCount HistTotalSpillCost,
-                                               LengthCostEnumerator *LCE){
-  auto RequiredImprovement = std::max(HistTotalSpillCost - LCE->getTrgtSpillCostConstrnt(), 0);
+                                               LengthCostEnumerator *LCE) {
+  auto RequiredImprovement =
+      std::max(HistTotalSpillCost - LCE->getTrgtSpillCostConstrnt(), 0);
   auto ImprovementOnHistory = HistPrefixSpillCost - OtherPrefixSpillCost;
   return ImprovementOnHistory <= RequiredImprovement;
 }
-
 
 // For peak cost functions (PERP, PRP, Occupancy) the suffix cost does not
 // depend on the prefix cost.
@@ -503,8 +504,6 @@ static bool doesHistoryPeakCostDominateFrstPss(InstCount OtherPrefixSpillCost,
   return LCE->getBestSpillCost() <= OtherPrefixSpillCost;
 }
 
-
-
 // Second pass must also check history against first pass
 static bool doesHistoryPeakCostDominateScndPss(InstCount OtherPrefixSpillCost,
                                                InstCount HistPrefixSpillCost,
@@ -533,22 +532,21 @@ bool CostHistEnumTreeNode::chkCostDmntnForTwoPass(EnumTreeNode *Node,
 
   if (SpillCostFunc == SCF_TARGET || SpillCostFunc == SCF_PRP ||
       SpillCostFunc == SCF_PERP) {
-      if (LCE->getIsSecondPass())
-        ShouldPrune = doesHistoryPeakCostDominateScndPss(
-            Node->getSpillCost(), PartialSpillCost_, TotalSpillCost_, LCE);
-      else
-        ShouldPrune = doesHistoryPeakCostDominateFrstPss(
-            Node->getSpillCost(), PartialSpillCost_, TotalSpillCost_, LCE);
+    if (LCE->getIsSecondPass())
+      ShouldPrune = doesHistoryPeakCostDominateScndPss(
+          Node->getSpillCost(), PartialSpillCost_, TotalSpillCost_, LCE);
+    else
+      ShouldPrune = doesHistoryPeakCostDominateFrstPss(
+          Node->getSpillCost(), PartialSpillCost_, TotalSpillCost_, LCE);
   }
 
   else if (SpillCostFunc == SCF_SLIL) {
     if (LCE->getIsSecondPass())
-      ShouldPrune = doesHistorySLILCostDominateScndPss(Node->getSpillCost(),
-                                                PartialSpillCost_, TotalSpillCost_, LCE);
+      ShouldPrune = doesHistorySLILCostDominateScndPss(
+          Node->getSpillCost(), PartialSpillCost_, TotalSpillCost_, LCE);
     else
-      ShouldPrune = doesHistorySLILCostDominateFrstPss(Node->getSpillCost(),
-                                                PartialSpillCost_, TotalSpillCost_, LCE);
-
+      ShouldPrune = doesHistorySLILCostDominateFrstPss(
+          Node->getSpillCost(), PartialSpillCost_, TotalSpillCost_, LCE);
   }
 
   return ShouldPrune;
@@ -560,9 +558,9 @@ bool CostHistEnumTreeNode::chkCostDmntnForSinglePass(EnumTreeNode *Node,
   if (time_ > Node->GetTime())
     return false;
 
-  #ifdef IS_DEBUG
-    assert(costInfoSet_);
-  #endif
+#ifdef IS_DEBUG
+  assert(costInfoSet_);
+#endif
   // If the other node's prefix cost is higher than or equal to the history
   // prefix cost the other node is pruned.
   bool ShouldPrune;
@@ -607,7 +605,6 @@ void CostHistEnumTreeNode::SetCostInfo(EnumTreeNode *node, bool, Enumerator *) {
 
   PartialSpillCost_ = node->getSpillCost();
   TotalSpillCost_ = node->getTotalSpillCost();
-
 
   if (suffix_ == nullptr && node->GetSuffix().size() > 0)
     suffix_ =
